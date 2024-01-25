@@ -272,7 +272,7 @@ app.use("/notification", notificationRoutes);
 //     res.status(500).send("Server Error");
 //   }
 // });
-app.get("/", async (req, res) => {
+app.get("/test", async (req, res) => {
   res.send("running");
   console.log("running");
 });
