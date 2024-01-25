@@ -21,13 +21,19 @@ import notificationRoutes from "./controllers/notificationController.js";
 import session from "express-session";
 // import mongoStore from 'connect-mongo';
 // import mongoose from 'mongoose';
-
 // import multer from 'multer';
-express.json();
-express.urlencoded();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://deluxe-pie-9b366f.netlify.app",
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true,
+  })
+);
 // app.use(bodyParser.json({ limit: "10mb" }));
 // app.use(bodyParser.urlencoded({ limit: "10mb" }));
 // const sessionStore=new mongoStore({
@@ -51,11 +57,12 @@ app.use(cors());
 // });
 // const storage = multer.diskStorageStorage();
 
-app.use("project", projectRoutes);
-app.use("issue", issueRoutes);
-app.use("user", userRoutes);
-app.use("comment", commentRoutes);
-app.use("notification", notificationRoutes);
+app.use("/project", projectRoutes);
+app.use("/issue", issueRoutes);
+app.use("/user", userRoutes);
+app.use("/comment", commentRoutes);
+app.use("/notification", notificationRoutes);
+
 // app.post('/register',async(req,res)=>{
 
 //     const{email,name,password}=req.body;
