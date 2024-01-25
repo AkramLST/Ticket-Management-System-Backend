@@ -22,9 +22,6 @@ import session from "express-session";
 // import mongoStore from 'connect-mongo';
 // import mongoose from 'mongoose';
 // import multer from 'multer';
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 const app = express();
 app.use(express.json());
 app.use(
@@ -34,6 +31,9 @@ app.use(
     credentials: true,
   })
 );
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 // app.use(bodyParser.json({ limit: "10mb" }));
 // app.use(bodyParser.urlencoded({ limit: "10mb" }));
 // const sessionStore=new mongoStore({
