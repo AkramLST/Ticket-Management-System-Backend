@@ -44,11 +44,11 @@ app.use(cors());
 //     sameSite:'strict'
 //   }
 // }))
-app.get("/", (req, res) => {
-  console.log(req.session);
-  console.log(req.session.id);
-  res.send("hello session tutorial");
-});
+// app.get("/", (req, res) => {
+//   console.log(req.session);
+//   console.log(req.session.id);
+//   res.send("hello session tutorial");
+// });
 // const storage = multer.diskStorageStorage();
 
 app.use("/project", projectRoutes);
@@ -116,133 +116,128 @@ app.use("/notification", notificationRoutes);
 //   },
 // });
 
-app.post("/login", async (req, res) => {
-  const { email, password } = req.body;
+// app.post("/login", async (req, res) => {
+//   const { email, password } = req.body;
 
-  try {
-    const user = await scoreM.findOne({ email: email });
+//   try {
+//     const user = await scoreM.findOne({ email: email });
 
-    if (user) {
-      if (user.password === password) {
-        res.json({ message: "Login successful", role: user.role_id });
-      } else {
-        res.json({ message: "Invalid password", redirect: false });
-      }
-    } else {
-      res.json({ message: "User not found", redirect: false });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error logging in", redirect: false });
-  }
-});
+//     if (user) {
+//       if (user.password === password) {
+//         res.json({ message: "Login successful", role: user.role_id });
+//       } else {
+//         res.json({ message: "Invalid password", redirect: false });
+//       }
+//     } else {
+//       res.json({ message: "User not found", redirect: false });
+//     }
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Error logging in", redirect: false });
+//   }
+// });
 
-app.get("/getAllUser", async (req, res) => {
-  try {
-    const projects = await assinP.find({});
-    res.send(projects);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("Error retrieving users");
-  }
-});
+// app.get("/getAllUser", async (req, res) => {
+//   try {
+//     const projects = await assinP.find({});
+//     res.send(projects);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send("Error retrieving users");
+//   }
+// });
 
-app.get("/getAllUsername", async (req, res) => {
-  try {
-    const users = await scoreM.find({});
+// app.get("/getAllUsername", async (req, res) => {
+//   try {
+//     const users = await scoreM.find({});
 
-    res.send(users);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("Error retrieving users");
-  }
-});
+//     res.send(users);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send("Error retrieving users");
+//   }
+// });
 
-app.post("/addprojects", async (req, res) => {
-  try {
-    const { projectname, description, detail } = req.body;
+// app.post("/addprojects", async (req, res) => {
+//   try {
+//     const { projectname, description, detail } = req.body;
 
-    // Create a new project instance using the Project model
-    const newProject = new assinP({
-      projectname,
-      description,
-      detail,
-    });
+//     // Create a new project instance using the Project model
+//     const newProject = new assinP({
+//       projectname,
+//       description,
+//       detail,
+//     });
 
-    // Save the new project to the database
-    const savedProject = await newProject.save();
+// Save the new project to the database
+//     const savedProject = await newProject.save();
 
-    res.status(201).json(savedProject);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error adding the project.", error });
-  }
-});
-app.post("/userAssinProjects", async (req, res) => {
-  try {
-    const { projectId, clientname, projectname } = req.body;
+//     res.status(201).json(savedProject);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Error adding the project.", error });
+//   }
+// });
+// app.post("/userAssinProjects", async (req, res) => {
+//   try {
+//     const { projectId, clientname, projectname } = req.body;
 
-    // Create a new project instance using the Project model
-    const newProject = new userP({
-      projectId,
-      clientname,
-      projectname,
-    });
+//     const newProject = new userP({
+//       projectId,
+//       clientname,
+//       projectname,
+//     });
 
-    // Save the new project to the database
-    const savedProject = await newProject.save();
+//     const savedProject = await newProject.save();
 
-    res.status(201).json(savedProject);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error adding the project.", error });
-  }
-});
+//     res.status(201).json(savedProject);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Error adding the project.", error });
+//   }
+// });
 
-app.get("/getallUSERprojectsonly", async (req, res) => {
-  try {
-    const projects = await userP.find({});
-    res.send(projects);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("Error retrieving users");
-  }
-});
+// app.get("/getallUSERprojectsonly", async (req, res) => {
+//   try {
+//     const projects = await userP.find({});
+//     res.send(projects);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send("Error retrieving users");
+//   }
+// });
 
-app.post("/saveDataComplain", async (req, res) => {
-  try {
-    const { title, description, comments } = req.body;
+// app.post("/saveDataComplain", async (req, res) => {
+//   try {
+//     const { title, description, comments } = req.body;
+//     const complains = new tokenD({
+//       title,
+//       description,
+//       comments,
+//     });
 
-    // Create a new project instance using the Project model
-    const complains = new tokenD({
-      title,
-      description,
-      comments,
-    });
+//     const complain = await complains.save();
 
-    // Save the new project to the database
-    const complain = await complains.save();
+//     res.status(201).json(complain);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Error adding the project.", error });
+//   }
+// });
 
-    res.status(201).json(complain);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error adding the project.", error });
-  }
-});
+// app.get("/getAlltickets", async (req, res) => {
+//   try {
+//     const tickets = await tokenD.find({});
 
-app.get("/getAlltickets", async (req, res) => {
-  try {
-    const tickets = await tokenD.find({});
-
-    res.send(tickets);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("Error retrieving token");
-  }
-});
-app.get("/test", async (req, res) => {
-  console.log("test api");
-});
+//     res.send(tickets);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send("Error retrieving token");
+//   }
+// });
+// app.get("/test", async (req, res) => {
+//   console.log("test api");
+// });
 
 // app.post("/upload", upload.single("file"), async (req, res) => {
 //   const { title , description, comments ,filePath  } = req.body;
