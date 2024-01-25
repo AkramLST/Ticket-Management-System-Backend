@@ -272,6 +272,10 @@ app.use("/notification", notificationRoutes);
 //     res.status(500).send("Server Error");
 //   }
 // });
+app.get("/", async (req, res) => {
+  res.send("running");
+  console.log("running");
+});
 const server = app.listen(0, () => {
   const port = server.address().port;
   console.log(`Server is running on port ${port}`);
