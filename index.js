@@ -51,11 +51,11 @@ app.use(cors());
 // });
 // const storage = multer.diskStorageStorage();
 
-app.use("/project", projectRoutes);
-app.use("/issue", issueRoutes);
-app.use("/user", userRoutes);
-app.use("/comment", commentRoutes);
-app.use("/notification", notificationRoutes);
+app.use("project", projectRoutes);
+app.use("issue", issueRoutes);
+app.use("user", userRoutes);
+app.use("comment", commentRoutes);
+app.use("notification", notificationRoutes);
 // app.post('/register',async(req,res)=>{
 
 //     const{email,name,password}=req.body;
