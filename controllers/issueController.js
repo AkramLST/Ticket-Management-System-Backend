@@ -2,6 +2,7 @@ import issueModel from "../models/issueModel.js";
 
 import Express from "express";
 import nodemailer from "nodemailer";
+import userModel from "../models/userModel.js";
 const router = Express.Router();
 
 const transporter = nodemailer.createTransport({
@@ -16,7 +17,7 @@ const transporter = nodemailer.createTransport({
 router.post("/create", async (req, res) => {
   const { iname, idescription, priority, status, assignedto, id, userId } =
     req.body;
-  console.log("assignedto", assignedto);
+  // console.log("assignedto", assignedto);
   try {
     const issue = await issueModel({
       issueName: iname,
@@ -29,10 +30,12 @@ router.post("/create", async (req, res) => {
       userId: userId,
       // userId:userId
     });
+    const user = await userModel.findById({ assignedto });
+    console.log("user", user);
     if (assignedto) {
       const mailOptions = {
         from: "muhammadakram00006@gmail.com",
-        to: "brocklesner126126@gmail.com",
+        to: user.Email,
         subject: "Issue Assigned",
         html: "someone has created an issue and assigned to you",
       };
