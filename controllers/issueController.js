@@ -16,6 +16,7 @@ const transporter = nodemailer.createTransport({
 router.post("/create", async (req, res) => {
   const { iname, idescription, priority, status, assignedto, id, userId } =
     req.body;
+  console.log("assignedto", assignedto);
   try {
     const issue = await issueModel({
       issueName: iname,
