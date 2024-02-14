@@ -1,12 +1,21 @@
 import issueModel from "../models/issueModel.js";
+
 import Express from "express";
+import nodemailer from "nodemailer";
 const router = Express.Router();
+
+const transporter = nodemailer.createTransport({
+  service: "Gmail", // Use your email service provider
+  auth: {
+    user: "muhammadakram00006@gmail.com", // Replace with your email address
+    pass: "gmji hbtk ehca jveq", // Replace with your email password
+  },
+});
 
 //create a issue
 router.post("/create", async (req, res) => {
   const { iname, idescription, priority, status, assignedto, id, userId } =
     req.body;
-  // console.log(id);
   try {
     const issue = await issueModel({
       issueName: iname,
@@ -19,6 +28,23 @@ router.post("/create", async (req, res) => {
       userId: userId,
       // userId:userId
     });
+    if (assignedto) {
+      const mailOptions = {
+        from: "muhammadakram00006@gmail.com",
+        to: assignedto.Email,
+        subject: "Issue Assigned",
+        html: "someone has created an issue and assigned to you",
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error("Error sending email:", error);
+        } else {
+          console.log("Email sent:", info.response);
+        }
+      });
+    }
+
     const data = await issue.save();
     res.status(200).json({
       succes: true,
