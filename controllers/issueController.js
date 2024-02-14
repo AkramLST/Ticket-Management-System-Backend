@@ -31,7 +31,7 @@ router.post("/create", async (req, res) => {
     if (assignedto) {
       const mailOptions = {
         from: "muhammadakram00006@gmail.com",
-        to: assignedto.Email,
+        to: "brocklesner126126@gmail.com",
         subject: "Issue Assigned",
         html: "someone has created an issue and assigned to you",
       };
