@@ -17,6 +17,7 @@ const transporter = nodemailer.createTransport({
 router.post("/create", async (req, res) => {
   const { iname, idescription, priority, status, assignedto, id, userId } =
     req.body;
+  const mentionedURL = `https://lst-ticketing-system.netlify.app/issues/${id}`;
   // console.log("assignedto", assignedto);
   try {
     const issue = await issueModel({
@@ -37,7 +38,8 @@ router.post("/create", async (req, res) => {
         from: "muhammadakram00006@gmail.com",
         to: user.Email,
         subject: "Issue Assigned",
-        html: "someone has created an issue and assigned to you",
+        html: `someone has created issue <b> ${iname} </b> with <b> ${priority} </b> priority and assigned it to you... 
+        please click <a href="${mentionedURL}">here</a> to see`,
       };
 
       transporter.sendMail(mailOptions, (error, info) => {

@@ -121,7 +121,7 @@ router.post("/create", async (req, res) => {
   try {
     const { senderId, receiverId, commentId, comment, issueId, message } =
       req.body;
-    const mentionedURL = `http://localhost:5173/issue/${issueId}`;
+    const mentionedURL = `https://lst-ticketing-system.netlify.app/issue/${issueId}`;
 
     const notification = new notificationModel({
       senderId: senderId,
