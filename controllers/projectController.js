@@ -31,7 +31,7 @@ router.post("/create", async (req, res) => {
         from: "muhammadakram00006@gmail.com",
         to: user.Email,
         subject: "Project Created and Assigned to you",
-        html: `an Admin has created a new project <b style="color: blue;"> ${name} </b> with this description 
+        html: `an Admin has created a new project <b style="color: red;"> ${name} </b> with this description 
         <b style="color: blue;">${description}</b>  and assigned it to you... 
         please click <a href="${mentionedURL}">here</a> to see`,
       };
