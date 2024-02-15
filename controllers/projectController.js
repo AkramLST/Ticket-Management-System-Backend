@@ -22,8 +22,11 @@ router.post("/create", async (req, res) => {
       description: description,
       Assignedto: assignedto,
     });
-    const user = await userModel.findById(assignedto);
-    if (assignedto) {
+
+    // Find all users with the given IDs
+    const users = await userModel.find({ _id: { $in: assignedto } });
+
+    for (const user of users) {
       const mailOptions = {
         from: "muhammadakram00006@gmail.com",
         to: user.Email,
@@ -41,6 +44,7 @@ router.post("/create", async (req, res) => {
         }
       });
     }
+
     const data = await project.save();
     res.status(200).json({
       succes: true,
