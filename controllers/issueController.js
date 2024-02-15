@@ -32,7 +32,6 @@ router.post("/create", async (req, res) => {
       // userId:userId
     });
     const user = await userModel.findById(assignedto);
-    console.log("user", user);
     if (assignedto) {
       const mailOptions = {
         from: "muhammadakram00006@gmail.com",
