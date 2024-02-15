@@ -32,7 +32,7 @@ router.post("/create", async (req, res) => {
         to: user.Email,
         subject: "Project Created and Assigned to you",
         html: `an Admin has created a new project <b style="color: red;"> ${name} </b> with this description 
-        <b style="color: blue;">${description}</b>  and assigned it to you... 
+        <p style="color: blue;">${description}</p>  and assigned it to you... 
         please click <a href="${mentionedURL}">here</a> to see`,
       };
 
@@ -140,14 +140,13 @@ router.post("/update", async (req, res) => {
       { new: true }
     );
     const users = await userModel.find({ _id: { $in: AssignedTo } });
-
     for (const user of users) {
       const mailOptions = {
         from: "muhammadakram00006@gmail.com",
         to: user.Email,
         subject: "Project Updated",
         html: `an Admin has updated the project <b style="color: red;"> ${name} </b> with this description 
-        <b style="color: blue;">${description}</b>... 
+        <p style="color: blue;">${description}</p>... 
         please click <a href="${mentionedURL}">here</a> to see...`,
       };
 
