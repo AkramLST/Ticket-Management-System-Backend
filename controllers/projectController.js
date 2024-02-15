@@ -6,10 +6,10 @@ import userModel from "../models/userModel.js";
 
 const router = express.Router();
 const transporter = nodemailer.createTransport({
-  service: "Gmail", // Use your email service provider
+  service: "Gmail",
   auth: {
-    user: "muhammadakram00006@gmail.com", // Replace with your email address
-    pass: "gmji hbtk ehca jveq", // Replace with your email password
+    user: "muhammadakram00006@gmail.com",
+    pass: "gmji hbtk ehca jveq",
   },
 });
 router.post("/create", async (req, res) => {
@@ -132,13 +132,33 @@ router.post("/delete", async (req, res) => {
 router.post("/update", async (req, res) => {
   try {
     const { _id, name, description, AssignedTo, removedUsers } = req.body;
-
+    const mentionedURL = `https://lst-ticketing-system.netlify.app`;
     // Update the project with the new data
     const updatedProject = await projectModel.findByIdAndUpdate(
       _id,
       { name, description, Assignedto: AssignedTo },
       { new: true }
     );
+    const users = await userModel.find({ _id: { $in: AssignedTo } });
+
+    for (const user of users) {
+      const mailOptions = {
+        from: "muhammadakram00006@gmail.com",
+        to: user.Email,
+        subject: "Project Updated",
+        html: `an Admin has updated the project <b style="color: red;"> ${name} </b> with this description 
+        <b style="color: blue;">${description}</b>... 
+        please click <a href="${mentionedURL}">here</a> to see...`,
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error("Error sending email:", error);
+        } else {
+          console.log("Email sent:", info.response);
+        }
+      });
+    }
 
     // Remove users from the project who were deleted
     if (removedUsers && removedUsers.length > 0) {
