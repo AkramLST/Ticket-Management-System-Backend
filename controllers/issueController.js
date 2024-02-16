@@ -15,8 +15,16 @@ const transporter = nodemailer.createTransport({
 
 //create a issue
 router.post("/create", async (req, res) => {
-  const { iname, idescription, priority, status, assignedto, id, userId } =
-    req.body;
+  const {
+    iname,
+    idescription,
+    priority,
+    status,
+    assignedto,
+    id,
+    userId,
+    deviceType,
+  } = req.body;
   const mentionedURL = `https://lst-ticketing-system.netlify.app/issues/${id}`;
   // console.log("assignedto", assignedto);
   try {
@@ -29,6 +37,7 @@ router.post("/create", async (req, res) => {
       Assignedto: assignedto,
       projectId: id,
       userId: userId,
+      deviceType: deviceType,
       // userId:userId
     });
     const user = await userModel.findById(assignedto);

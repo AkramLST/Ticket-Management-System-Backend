@@ -52,6 +52,10 @@ const issueSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "users",
     },
+    deviceType: {
+      type: String,
+      default: "",
+    },
     date: {
       type: Date,
       default: Date.now, // Set the default value to the current date and time
