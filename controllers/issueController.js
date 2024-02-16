@@ -23,6 +23,7 @@ router.post("/create", async (req, res) => {
     assignedto,
     id,
     userId,
+    userName,
     deviceType,
   } = req.body;
   const mentionedURL = `https://lst-ticketing-system.netlify.app/issues/${id}`;
@@ -37,6 +38,7 @@ router.post("/create", async (req, res) => {
       Assignedto: assignedto,
       projectId: id,
       userId: userId,
+      userName: userName,
       deviceType: deviceType,
       // userId:userId
     });

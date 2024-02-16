@@ -56,6 +56,10 @@ const issueSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    userName: {
+      type: String,
+      default: "user",
+    },
     date: {
       type: Date,
       default: Date.now, // Set the default value to the current date and time
