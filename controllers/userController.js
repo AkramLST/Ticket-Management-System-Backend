@@ -64,6 +64,7 @@ router.post("/register", upload.single("image"), async (req, res) => {
 // ... (previous code)
 
 router.post("/login", async (req, res) => {
+  console.log("ewwww", req.body);
   try {
     const { email, password } = req.body;
     const user = await userModel.findOne({ Email: email });
