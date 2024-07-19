@@ -24,7 +24,6 @@ import session from "express-session";
 // import mongoose from 'mongoose';
 // import multer from 'multer';
 const app = express();
-app.use(express.json());
 app.use(
   cors()
   //   {

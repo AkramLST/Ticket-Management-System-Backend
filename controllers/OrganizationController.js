@@ -15,22 +15,21 @@ const transporter = nodemailer.createTransport({
 });
 router.post("/create", async (req, res) => {
   const { orgname, orgdescription } = req.body;
+  console.log(req.body);
   try {
-    let project = OrgModel({
-      orgname: orgname,
-      orgdescription: orgdescription,
-      //   Assignedto: assignedto,
-    });
+    const data = await OrgModel.create({ orgname, orgdescription });
 
-    // Find all users with the given IDs
-    // const users = await userModel.find({ _id: { $in: assignedto } });
-    const data = await project.save();
+    await data.save();
     res.status(200).json({
-      succes: true,
+      success: true,
       data,
     });
   } catch (e) {
     console.log(e);
+    res.status(500).json({
+      success: false,
+      error: e.message,
+    });
   }
 });
 
