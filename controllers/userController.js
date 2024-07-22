@@ -21,11 +21,12 @@ import upload from "../multer.js";
 
 // const JWT_SECRET = 'your-secret-key';
 router.post("/register", upload.single("image"), async (req, res) => {
-  const { data } = req.body;
+  console.log("mybody", req.body);
+  const { username, email, password, gender, role, id, orname } = req.body;
   // const { file } = req;
   // const hashedPassword = await bcrypt.hash(password, 10);
   try {
-    const existingUser = await userModel.findOne({ Email: data.email });
+    const existingUser = await userModel.findOne({ Email: email });
     if (existingUser) {
       return res.status(400).json({ message: "Email is already registered" });
     }
@@ -37,10 +38,13 @@ router.post("/register", upload.single("image"), async (req, res) => {
     // }
 
     const user = new userModel({
-      Name: data.name,
-      Email: data.email,
-      Gender: data.gender,
-      Password: data.password,
+      Name: username,
+      Email: email,
+      Gender: gender,
+      Password: password,
+      Role: role,
+      OrganizationId: id,
+      OrganizationName: orname,
       // ProfileImage: file ? file.path : undefined,
       // profileImage: data.req.file,
     });
