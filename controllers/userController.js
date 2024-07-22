@@ -152,8 +152,6 @@ router.post("/logout", async (req, res) => {
 //get All users profiles
 router.post("/all", async (req, res) => {
   const { id } = req.body;
-  console.log("checking", req.body);
-
   try {
     const users = await userModel.find({ OrganizationId: id });
 
