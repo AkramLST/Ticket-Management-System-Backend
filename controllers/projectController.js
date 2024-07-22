@@ -13,7 +13,8 @@ const transporter = nodemailer.createTransport({
   },
 });
 router.post("/create", async (req, res) => {
-  const { name, description, assignedto } = req.body;
+  const { name, description, assignedto, orgid } = req.body;
+  console.log("new body", req.body);
   const mentionedURL = `https://lst-ticketing-system.netlify.app`;
 
   try {
@@ -21,6 +22,7 @@ router.post("/create", async (req, res) => {
       name: name,
       description: description,
       Assignedto: assignedto,
+      OrganizationId: orgid,
     });
 
     // Find all users with the given IDs
@@ -70,6 +72,21 @@ router.post("/allUserProjects", async (req, res) => {
   const { id } = req.body;
   try {
     const projects = await projectModel.find({ Assignedto: id });
+
+    if (projects) {
+      res.status(200).json({
+        succes: true,
+        data: projects,
+      });
+    }
+  } catch (error) {
+    console.log(error);
+  }
+});
+router.post("/allsuperadminProjects", async (req, res) => {
+  const { id } = req.body;
+  try {
+    const projects = await projectModel.find({ OrganizationId: id });
 
     if (projects) {
       res.status(200).json({
