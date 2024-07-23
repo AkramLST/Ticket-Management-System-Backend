@@ -25,12 +25,11 @@ import session from "express-session";
 // import multer from 'multer';
 const app = express();
 app.use(
-  cors()
-  //   {
-  //   origin: "https://lst-ticketing-system.netlify.app",
-  //   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  //   credentials: true,
-  // }
+  cors({
+    origin: "https://lst-ticketing-system.netlify.app",
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true,
+  })
 );
 const port = 3001;
 app.use(express.json());
