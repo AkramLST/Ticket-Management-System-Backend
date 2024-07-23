@@ -283,6 +283,7 @@ app.get("/test", async (req, res) => {
   res.send("running");
   console.log("running");
 });
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+const server = app.listen(0, () => {
+  const port = server.address().port;
+  console.log(`Server is running on port ${port}`);
 });
