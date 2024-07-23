@@ -27,7 +27,16 @@ const userSchema = new mongoose.Schema({
 
   Role: {
     type: String,
-    default: "user",
+    // default: "user",
+  },
+  OrganizationId: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "organizations",
+    },
+  ],
+  OrganizationName: {
+    type: String,
   },
   ProfileImage: {
     type: String,

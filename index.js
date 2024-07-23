@@ -17,13 +17,13 @@ import issueRoutes from "./controllers/issueController.js";
 import userRoutes from "./controllers/userController.js";
 import commentRoutes from "./controllers/commentController.js";
 import notificationRoutes from "./controllers/notificationController.js";
+import orgRoutes from "./controllers/OrganizationController.js";
 // import 'bootstrap/dist/css/bootstrap.css'
 import session from "express-session";
 // import mongoStore from 'connect-mongo';
 // import mongoose from 'mongoose';
 // import multer from 'multer';
 const app = express();
-app.use(express.json());
 app.use(
   cors({
     origin: "https://lst-ticketing-system.netlify.app",
@@ -31,7 +31,7 @@ app.use(
     credentials: true,
   })
 );
-
+const port = 3001;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // app.use(bodyParser.json({ limit: "10mb" }));
@@ -62,7 +62,7 @@ app.use("/issue", issueRoutes);
 app.use("/user", userRoutes);
 app.use("/comment", commentRoutes);
 app.use("/notification", notificationRoutes);
-
+app.use("/organization", orgRoutes);
 // app.post('/register',async(req,res)=>{
 
 //     const{email,name,password}=req.body;

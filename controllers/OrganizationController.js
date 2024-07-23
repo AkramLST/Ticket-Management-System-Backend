@@ -1,6 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import projectModel from "../models/projectModels.js";
+import OrgModel from "../models/organizations.js";
 import nodemailer from "nodemailer";
 import userModel from "../models/userModel.js";
 
@@ -13,53 +14,28 @@ const transporter = nodemailer.createTransport({
   },
 });
 router.post("/create", async (req, res) => {
-  const { name, description, assignedto, orgid } = req.body;
-  console.log("new body", req.body);
-  const mentionedURL = `https://lst-ticketing-system.netlify.app`;
-
+  const { orgname, orgdescription } = req.body;
+  console.log(req.body);
   try {
-    let project = projectModel({
-      name: name,
-      description: description,
-      Assignedto: assignedto,
-      OrganizationId: orgid,
-    });
+    const data = await OrgModel.create({ orgname, orgdescription });
 
-    // Find all users with the given IDs
-    const users = await userModel.find({ _id: { $in: assignedto } });
-
-    for (const user of users) {
-      const mailOptions = {
-        from: "muhammadakram00006@gmail.com",
-        to: user.Email,
-        subject: "Project Created and Assigned to you",
-        html: `an Admin has created a new project <b style="color: red;"> ${name} </b> with this description 
-        <p style="color: blue;">${description}</p>  and assigned it to you... 
-        please click <a href="${mentionedURL}">here</a> to see`,
-      };
-
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.error("Error sending email:", error);
-        } else {
-          console.log("Email sent:", info.response);
-        }
-      });
-    }
-
-    const data = await project.save();
+    await data.save();
     res.status(200).json({
-      succes: true,
+      success: true,
       data,
     });
   } catch (e) {
     console.log(e);
+    res.status(500).json({
+      success: false,
+      error: e.message,
+    });
   }
 });
 
 router.get("/all", async (req, res) => {
   try {
-    const projects = await projectModel.find().populate("Assignedto");
+    const projects = await OrgModel.find();
     res.status(200).json({
       succes: true,
       data: projects,
@@ -72,21 +48,6 @@ router.post("/allUserProjects", async (req, res) => {
   const { id } = req.body;
   try {
     const projects = await projectModel.find({ Assignedto: id });
-
-    if (projects) {
-      res.status(200).json({
-        succes: true,
-        data: projects,
-      });
-    }
-  } catch (error) {
-    console.log(error);
-  }
-});
-router.post("/allsuperadminProjects", async (req, res) => {
-  const { id } = req.body;
-  try {
-    const projects = await projectModel.find({ OrganizationId: id });
 
     if (projects) {
       res.status(200).json({
