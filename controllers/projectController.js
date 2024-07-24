@@ -86,7 +86,9 @@ router.post("/allUserProjects", async (req, res) => {
 router.post("/allsuperadminProjects", async (req, res) => {
   const { id } = req.body;
   try {
-    const projects = await projectModel.find({ OrganizationId: id });
+    const projects = await projectModel
+      .find({ OrganizationId: id })
+      .populate("Assignedto");
 
     if (projects) {
       res.status(200).json({
