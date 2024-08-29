@@ -25,9 +25,9 @@ router.post("/create", async (req, res) => {
     userId,
     userName,
     deviceType,
+    images,
   } = req.body;
   const mentionedURL = `https://lst-ticketing-system.netlify.app/issues/${id}`;
-  // console.log("assignedto", assignedto);
   try {
     const issue = await issueModel({
       issueName: iname,
@@ -40,6 +40,7 @@ router.post("/create", async (req, res) => {
       userId: userId,
       userName: userName,
       deviceType: deviceType,
+      images: images,
       // userId:userId
     });
     const user = await userModel.findById(assignedto);

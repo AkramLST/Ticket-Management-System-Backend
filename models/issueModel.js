@@ -64,6 +64,7 @@ const issueSchema = new mongoose.Schema(
       type: Date,
       default: Date.now, // Set the default value to the current date and time
     },
+    images: [],
   },
   { timestamps: true }
 );
