@@ -22,7 +22,8 @@ import upload from "../multer.js";
 // const JWT_SECRET = 'your-secret-key';
 router.post("/register", upload.single("image"), async (req, res) => {
   console.log("mybody", req.body);
-  const { username, email, password, gender, role, id, orname } = req.body;
+  const { username, email, password, gender, role, id, orname, image } =
+    req.body;
   // const { file } = req;
   // const hashedPassword = await bcrypt.hash(password, 10);
   try {
@@ -45,6 +46,7 @@ router.post("/register", upload.single("image"), async (req, res) => {
       Role: role,
       OrganizationId: id,
       OrganizationName: orname,
+      ProfileImage: image,
       // ProfileImage: file ? file.path : undefined,
       // profileImage: data.req.file,
     });
