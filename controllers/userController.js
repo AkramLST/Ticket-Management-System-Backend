@@ -244,10 +244,10 @@ router.get("/user/:userId", async (req, res) => {
 //update user profile
 router.post("/update", async (req, res) => {
   try {
-    const { _id, Name, Email, Password } = req.body.data;
+    const { _id, Name, Email, Password,image } = req.body.data;
     const updatedUser = await userModel.findByIdAndUpdate(
       _id,
-      { Name, Email, Password },
+      { Name, Email, Password, ProfileImage:image },
       { new: true }
     );
 
