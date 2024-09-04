@@ -169,6 +169,23 @@ router.post("/all", async (req, res) => {
     });
   }
 });
+router.post("/allusers", async (req, res) => {
+  const { id } = req.body;
+  try {
+    const users = await userModel.find();
+
+    res.status(200).json({
+      success: true,
+      data: users,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      error: "An error occurred while fetching users.",
+    });
+  }
+});
 
 //get selected users profiles
 router.post("/allSelected", async (req, res) => {
@@ -244,10 +261,10 @@ router.get("/user/:userId", async (req, res) => {
 //update user profile
 router.post("/update", async (req, res) => {
   try {
-    const { _id, Name, Email, Password,image } = req.body.data;
+    const { _id, Name, Email, Password, image } = req.body.data;
     const updatedUser = await userModel.findByIdAndUpdate(
       _id,
-      { Name, Email, Password, ProfileImage:image },
+      { Name, Email, Password, ProfileImage: image },
       { new: true }
     );
 
