@@ -10,25 +10,14 @@ const router = Express.Router();
 router.post("/create", async (req, res) => {
   try {
     const { comment, userId, issueId, image, types, mention } = req.body;
-
-    let files = [];
-
-    // Access the uploaded file using req.file
-    if (image.length > 0) {
-      files = image.map((img, i) => {
-        return {
-          file: img,
-          filetype: types[i],
-        };
-      });
-    }
+    console.log(req.body);
 
     // Create a new comment document including the image field
     const comments = await commentModel({
       userId: userId,
       comment: comment,
       issueId: issueId,
-      image: image ? files : null,
+      image: image,
       mention: mention,
     });
 
