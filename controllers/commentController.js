@@ -46,7 +46,7 @@ router.get("/all", async (req, res) => {
     // Use the issueId to filter comments
     const commentsForIssue = await commentModel
       .find({ issueId: issueId })
-      .populate("userId", "Name");
+      .populate("userId", "Name ProfileImage"); // Specify both fields here
 
     res.status(200).json({
       success: true,
@@ -57,6 +57,7 @@ router.get("/all", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
 //Delete a comment
 
 router.post("/delete", async (req, res) => {
@@ -72,7 +73,33 @@ router.post("/delete", async (req, res) => {
     console.log(error);
   }
 });
+//////reply
+router.post("/reply", async (req, res) => {
+  const { commentid, text, username } = req.body;
+  console.log(req.body);
+  try {
+    await commentModel.findByIdAndUpdate(
+      commentid,
+      {
+        $push: {
+          reply: {
+            username: username,
+            text: text,
+            date: new Date(),
+          },
+        },
+      },
+      { new: true, useFindAndModify: false } // `new: true` returns the updated document
+    );
+    res.json({
+      success: true,
+      message: "added successfully",
+    });
+  } catch (error) {}
+});
+
 //update comments
+
 router.post("/update", async (req, res) => {
   try {
     const { data } = req.body;

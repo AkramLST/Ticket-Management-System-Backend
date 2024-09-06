@@ -21,6 +21,13 @@ const commentSchema = new mongoose.Schema({
   mention: {
     type: String,
   },
+  reply: [
+    {
+      username: { type: String },
+      text: { type: String },
+      date: { type: Date, default: Date.now },
+    },
+  ],
 });
 const commentModel = mongoose.model("comment", commentSchema);
 export default commentModel;
