@@ -25,6 +25,7 @@ const commentSchema = new mongoose.Schema({
     {
       username: { type: String },
       text: { type: String },
+      ProfileImage: { type: String },
       date: { type: Date, default: Date.now },
     },
   ],

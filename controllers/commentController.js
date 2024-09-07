@@ -75,7 +75,7 @@ router.post("/delete", async (req, res) => {
 });
 //////reply
 router.post("/reply", async (req, res) => {
-  const { commentid, text, username } = req.body;
+  const { commentid, text, username, ProfileImage } = req.body;
   console.log(req.body);
   try {
     await commentModel.findByIdAndUpdate(
@@ -85,6 +85,7 @@ router.post("/reply", async (req, res) => {
           reply: {
             username: username,
             text: text,
+            ProfileImage: ProfileImage,
             date: new Date(),
           },
         },
