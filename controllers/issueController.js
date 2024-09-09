@@ -204,4 +204,31 @@ router.post("/delete", async (req, res) => {
   }
 });
 
+router.post("/createboardissue", async (req, res) => {
+  const { issueName, status } = req.body;
+  console.log(req.body);
+  try {
+    const issue = await issueModel.create({ issueName, status });
+    res.json({
+      success: true,
+      message: "issue created successfully",
+    });
+  } catch (error) {
+    res.json({
+      succes: false,
+      message: "server side error",
+    });
+  }
+});
+// router.post("updateStatusissue", async (req, res) => {
+//   const { status, id } = req.body;
+//   console.log(req.body);
+//   try {
+//     const res = await issueModel.findByIdAndUpdate({ id }, { status });
+//     res.json({
+//       success: true,
+//       message: "updated successfully",
+//     });
+//   } catch (error) {}
+// });
 export default router;

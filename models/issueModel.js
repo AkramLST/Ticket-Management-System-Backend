@@ -12,7 +12,6 @@ const issueSchema = new mongoose.Schema(
     issueDescription: {
       type: String,
       //required:true
-      default: "high",
     },
     priority: {
       type: String,
