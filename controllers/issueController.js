@@ -153,6 +153,20 @@ router.post("/delete", async (req, res) => {
     console.log(error);
   }
 });
+router.post("updatedescription", async (req, res) => {
+  const { issueDescription, id } = req.body;
+  console.log("new body", req.body);
+  try {
+    const response = await issueModel.findByIdAndUpdate(
+      { id },
+      { issueDescription }
+    );
+    res.json({
+      success: true,
+      message: "updated successfully",
+    });
+  } catch (error) {}
+});
 //update a issue
 router.post("/update", async (req, res) => {
   try {
@@ -220,15 +234,5 @@ router.post("/createboardissue", async (req, res) => {
     });
   }
 });
-// router.post("updateStatusissue", async (req, res) => {
-//   const { status, id } = req.body;
-//   console.log(req.body);
-//   try {
-//     const res = await issueModel.findByIdAndUpdate({ id }, { status });
-//     res.json({
-//       success: true,
-//       message: "updated successfully",
-//     });
-//   } catch (error) {}
-// });
+
 export default router;
