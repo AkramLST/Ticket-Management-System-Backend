@@ -153,20 +153,88 @@ router.post("/delete", async (req, res) => {
     console.log(error);
   }
 });
-router.post("updatedescription", async (req, res) => {
-  const { issueDescription, id } = req.body;
-  console.log("new body", req.body);
+router.post("/updateAssign", async (req, res) => {
+  const { issueId, Assignedto } = req.body;
+  console.log(req.body);
+
   try {
     const response = await issueModel.findByIdAndUpdate(
-      { id },
-      { issueDescription }
+      issueId, // Use the issueId directly
+      { $set: { Assignedto } }, // Update the Assignedto field
+      { new: true } // Return the updated document
     );
+
     res.json({
       success: true,
-      message: "updated successfully",
+      message: "Assigned user updated successfully",
+      data: response,
     });
-  } catch (error) {}
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while updating the assigned user",
+      error: error.message, // Return the error message for debugging
+    });
+  }
 });
+router.post("/updateimageurl", async (req, res) => {
+  const { issueId, imageUrl } = req.body;
+
+  try {
+    // Find the issue by ID
+    const issue = await issueModel.findById(issueId);
+    if (!issue) {
+      return res.status(404).json({
+        success: false,
+        message: "Issue not found",
+      });
+    }
+
+    // Push the new image URL to the images array
+    issue.images.push(imageUrl);
+
+    // Save the updated issue
+    const updatedIssue = await issue.save();
+
+    res.json({
+      success: true,
+      message: "Image URL added successfully",
+      data: updatedIssue,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while updating the image URL",
+      error: error.message, // Return the error message for debugging
+    });
+  }
+});
+
+router.post("/updatedescription", async (req, res) => {
+  const { issueDescription, id } = req.body;
+  console.log("new body", req.body);
+
+  try {
+    const response = await issueModel.findByIdAndUpdate(
+      id, // Use the id directly
+      { $set: { issueDescription } }, // Update the issue description
+      { new: true } // Return the updated document
+    );
+
+    res.json({
+      success: true,
+      message: "Updated successfully",
+      data: response, // Optionally send back the updated issue
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while updating",
+      error: error.message, // Return the error message for debugging
+    });
+  }
+});
+
 //update a issue
 router.post("/update", async (req, res) => {
   try {
@@ -219,10 +287,16 @@ router.post("/delete", async (req, res) => {
 });
 
 router.post("/createboardissue", async (req, res) => {
-  const { issueName, status } = req.body;
+  const { issueName, status, userId, userName, projectId } = req.body;
   console.log(req.body);
   try {
-    const issue = await issueModel.create({ issueName, status });
+    const issue = await issueModel.create({
+      issueName,
+      status,
+      userId,
+      userName,
+      projectId,
+    });
     res.json({
       success: true,
       message: "issue created successfully",
