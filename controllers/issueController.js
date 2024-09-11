@@ -177,6 +177,30 @@ router.post("/updateAssign", async (req, res) => {
     });
   }
 });
+router.post("/updateStatus", async (req, res) => {
+  const { issueId, status } = req.body;
+  console.log(req.body);
+
+  try {
+    const response = await issueModel.findByIdAndUpdate(
+      issueId, // Use the issueId directly
+      { $set: { status } }, // Update the Assignedto field
+      { new: true } // Return the updated document
+    );
+
+    res.json({
+      success: true,
+      message: "Assigned user updated successfully",
+      data: response,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while updating the assigned user",
+      error: error.message, // Return the error message for debugging
+    });
+  }
+});
 router.post("/updateimageurl", async (req, res) => {
   const { issueId, imageUrl } = req.body;
 
