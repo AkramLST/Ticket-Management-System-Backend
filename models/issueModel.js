@@ -8,6 +8,7 @@ const issueSchema = new mongoose.Schema(
     },
     type: {
       type: String,
+      default: "bug",
     },
     issueDescription: {
       type: String,

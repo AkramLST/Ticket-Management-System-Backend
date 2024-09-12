@@ -139,20 +139,20 @@ router.post("/singlepro", async (req, res) => {
 
 //Delete a issue
 
-router.post("/delete", async (req, res) => {
-  try {
-    let data = req.body;
+// router.post("/delete", async (req, res) => {
+//   try {
+//     let data = req.body;
 
-    const deleteIssue = await issueModel.findByIdAndDelete(data._id);
+//     const deleteIssue = await issueModel.findByIdAndDelete(data._id);
 
-    res.status(200).json({
-      succes: true,
-      message: "product deleted successfuly",
-    });
-  } catch (error) {
-    console.log(error);
-  }
-});
+//     res.status(200).json({
+//       succes: true,
+//       message: "product deleted successfuly",
+//     });
+//   } catch (error) {
+//     console.log(error);
+//   }
+// });
 router.post("/updateAssign", async (req, res) => {
   const { issueId, Assignedto } = req.body;
   console.log(req.body);
@@ -311,7 +311,7 @@ router.post("/update", async (req, res) => {
 router.post("/delete", async (req, res) => {
   try {
     const { data } = req.body;
-
+    console.log("my body", req.body);
     // Use the appropriate code to delete the issue by its _id
     const deleteIssue = await issueModel.findByIdAndRemove(data._id);
 
