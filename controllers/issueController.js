@@ -3,6 +3,7 @@ import issueModel from "../models/issueModel.js";
 import Express from "express";
 import nodemailer from "nodemailer";
 import userModel from "../models/userModel.js";
+import issueLogModel from "../models/issueLogsModel.js";
 const router = Express.Router();
 
 const transporter = nodemailer.createTransport({
@@ -260,15 +261,22 @@ router.post("/updateimageurl", async (req, res) => {
 });
 
 router.post("/updatedescription", async (req, res) => {
-  const { issueDescription, id } = req.body;
+  const { issueDescription, issueid, id, userName } = req.body;
   console.log("new body", req.body);
 
   try {
     const response = await issueModel.findByIdAndUpdate(
-      id, // Use the id directly
+      issueid, // Use the id directly
       { $set: { issueDescription } }, // Update the issue description
       { new: true } // Return the updated document
     );
+    if (response) {
+      await issueLogModel.create({
+        info: `${userName} updated the description of issue`,
+        userName,
+        projectId: id,
+      });
+    }
 
     res.json({
       success: true,
@@ -346,6 +354,15 @@ router.post("/createboardissue", async (req, res) => {
       userName,
       projectId,
     });
+    if (issue) {
+      await issueLogModel.create({
+        info: `${userName} created a new issue`,
+        userName,
+        issueName,
+        userId,
+        projectId,
+      });
+    }
     res.json({
       success: true,
       message: "issue created successfully",
