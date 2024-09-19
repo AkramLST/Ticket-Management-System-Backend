@@ -204,16 +204,23 @@ router.post("/updatePriority", async (req, res) => {
   }
 });
 router.post("/updateStatus", async (req, res) => {
-  const { issueId, status } = req.body;
+  const { issueId, status, userName, id } = req.body;
   console.log(req.body);
 
   try {
+    const Status = await issueModel.findById(issueId);
     const response = await issueModel.findByIdAndUpdate(
       issueId, // Use the issueId directly
       { $set: { status } }, // Update the Assignedto field
       { new: true } // Return the updated document
     );
-
+    if (response) {
+      await issueLogModel.create({
+        info: `${userName} changed the status of issue from ${Status.status} to ${status}`,
+        userName,
+        projectId: id,
+      });
+    }
     res.json({
       success: true,
       message: "Assigned user updated successfully",
