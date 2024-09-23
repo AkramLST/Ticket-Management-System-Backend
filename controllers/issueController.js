@@ -4,6 +4,7 @@ import Express from "express";
 import nodemailer from "nodemailer";
 import userModel from "../models/userModel.js";
 import issueLogModel from "../models/issueLogsModel.js";
+// import { io } from "../index.js";
 const router = Express.Router();
 
 const transporter = nodemailer.createTransport({
@@ -362,6 +363,7 @@ router.post("/createboardissue", async (req, res) => {
       userName,
       projectId,
     });
+
     if (issue) {
       await issueLogModel.create({
         info: `${userName} created a new issue`,
@@ -371,15 +373,26 @@ router.post("/createboardissue", async (req, res) => {
         ProfileImage,
         projectId,
       });
+
+      // Emit the new issue event to all connected clients
+      // io.emit("new_issue", {
+      //   userName,
+      //   issueName,
+      //   ProfileImage,
+      //   status,
+      //   projectId,
+      // });
     }
+
     res.json({
       success: true,
-      message: "issue created successfully",
+      message: "Issue created successfully",
     });
   } catch (error) {
+    console.error(error);
     res.json({
-      succes: false,
-      message: "server side error",
+      success: false,
+      message: "Server-side error",
     });
   }
 });
