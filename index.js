@@ -28,14 +28,14 @@ import session from "express-session";
 // import mongoose from 'mongoose';
 // import multer from 'multer';
 const app = express();
-// app.use(
-//   cors({
-//     origin: "https://lst-ticketing-system.netlify.app",
-//     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-//     credentials: true,
-//   })
-// );
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://lst-ticketing-system.netlify.app",
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true,
+  })
+);
+// app.use(cors());
 const server = http.createServer(app);
 export const io = new Server(server);
 const port = 3001;
