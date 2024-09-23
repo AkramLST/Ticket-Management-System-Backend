@@ -8,11 +8,11 @@ const issueSchema = new mongoose.Schema(
     },
     type: {
       type: String,
+      default: "bug",
     },
     issueDescription: {
       type: String,
       //required:true
-      default: "high",
     },
     priority: {
       type: String,
