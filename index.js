@@ -1,7 +1,5 @@
 import express from "express";
-import http from "http";
 // import socketIo from "socket.io";
-import { Server } from "socket.io"; // Change this line
 import cors from "cors";
 import "./cons.js";
 import "dotenv/config";
@@ -28,16 +26,16 @@ import session from "express-session";
 // import mongoose from 'mongoose';
 // import multer from 'multer';
 const app = express();
-// app.use(
-//   cors({
-//     origin: "https://lst-ticketing-system.netlify.app",
-//     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-//     credentials: true,
-//   })
-// );
-app.use(cors());
-const server = http.createServer(app);
-export const io = new Server(server);
+app.use(
+  cors({
+    origin: "https://lst-ticketing-system.netlify.app",
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true,
+  })
+);
+// app.use(cors());
+// const server = http.createServer(app);
+// export const io = new Server(server);
 const port = 3001;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -59,14 +57,14 @@ app.get("/test", async (req, res) => {
 //   const port = server.address().port;
 //   console.log(`Server is running on port ${port}`);
 // });
-io.on("connection", (socket) => {
-  console.log("A user connected");
+// io.on("connection", (socket) => {
+//   console.log("A user connected");
 
-  // Handle disconnection
-  socket.on("disconnect", () => {
-    console.log("A user disconnected");
-  });
-});
+//   // Handle disconnection
+//   socket.on("disconnect", () => {
+//     console.log("A user disconnected");
+//   });
+// });
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
