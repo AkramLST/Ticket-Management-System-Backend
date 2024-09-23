@@ -204,7 +204,7 @@ router.post("/updatePriority", async (req, res) => {
   }
 });
 router.post("/updateStatus", async (req, res) => {
-  const { issueId, status, userName, id } = req.body;
+  const { issueId, status, userName, id, ProfileImage } = req.body;
   console.log(req.body);
 
   try {
@@ -218,6 +218,7 @@ router.post("/updateStatus", async (req, res) => {
       await issueLogModel.create({
         info: `${userName} changed the status of issue from ${Status.status} to ${status}`,
         userName,
+        ProfileImage,
         projectId: id,
       });
     }
@@ -351,7 +352,8 @@ router.post("/delete", async (req, res) => {
 });
 
 router.post("/createboardissue", async (req, res) => {
-  const { issueName, status, userId, userName, projectId } = req.body;
+  const { issueName, status, userId, userName, ProfileImage, projectId } =
+    req.body;
   console.log(req.body);
   try {
     const issue = await issueModel.create({
@@ -367,6 +369,7 @@ router.post("/createboardissue", async (req, res) => {
         userName,
         issueName,
         userId,
+        ProfileImage,
         projectId,
       });
     }
