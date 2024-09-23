@@ -355,8 +355,6 @@ router.post("/delete", async (req, res) => {
 router.post("/createboardissue", async (req, res) => {
   const { issueName, status, userId, userName, ProfileImage, projectId } =
     req.body;
-  console.log(req.body);
-
   try {
     const issue = await issueModel.create({
       issueName,
