@@ -15,6 +15,9 @@ const logSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "projects",
     },
+    ProfileImage: {
+      type: String,
+    },
   },
   { timestamps: true }
 );
