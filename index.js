@@ -25,14 +25,14 @@ import session from "express-session";
 // import mongoose from 'mongoose';
 // import multer from 'multer';
 const app = express();
-// app.use(
-//   cors({
-//     origin: "https://lst-ticketing-system.netlify.app",
-//     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-//     credentials: true,
-//   })
-// );
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://lst-ticketing-system.netlify.app",
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true,
+  })
+);
+// app.use(cors());
 const port = 3001;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -286,10 +286,10 @@ app.get("/test", async (req, res) => {
   res.send("running");
   console.log("running");
 });
-// const server = app.listen(0, () => {
-//   const port = server.address().port;
-//   console.log(`Server is running on port ${port}`);
-// });
-app.listen(port, () => {
+const server = app.listen(0, () => {
+  const port = server.address().port;
   console.log(`Server is running on port ${port}`);
 });
+// app.listen(port, () => {
+//   console.log(`Server is running on port ${port}`);
+// });
