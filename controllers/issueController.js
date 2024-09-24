@@ -270,7 +270,7 @@ router.post("/updateimageurl", async (req, res) => {
 });
 
 router.post("/updatedescription", async (req, res) => {
-  const { issueDescription, issueid, id, userName, ProfileImage } = req.body;
+  const { issueDescription, issueid, id, userName } = req.body;
   console.log("new body", req.body);
 
   try {
@@ -284,7 +284,6 @@ router.post("/updatedescription", async (req, res) => {
         info: `${userName} updated the description of issue`,
         userName,
         projectId: id,
-        ProfileImage,
       });
     }
 
@@ -369,6 +368,7 @@ router.post("/createboardissue", async (req, res) => {
       await issueLogModel.create({
         info: `${userName} created a new issue`,
         userName,
+        issueName,
         userId,
         ProfileImage,
         projectId,
