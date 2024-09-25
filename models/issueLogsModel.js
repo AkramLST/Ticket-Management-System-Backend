@@ -8,6 +8,9 @@ const logSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "users",
     },
+    issueName: {
+      type: String,
+    },
     userName: {
       type: String,
     },
