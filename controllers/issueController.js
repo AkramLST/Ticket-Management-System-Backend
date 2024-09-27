@@ -4,6 +4,7 @@ import Express from "express";
 import nodemailer from "nodemailer";
 import userModel from "../models/userModel.js";
 import issueLogModel from "../models/issueLogsModel.js";
+import { io } from "../index.js";
 // import { io } from "../index.js";
 const router = Express.Router();
 
@@ -378,14 +379,15 @@ router.post("/createboardissue", async (req, res) => {
         projectId,
       });
 
-      // Emit the new issue event to all connected clients
-      // io.emit("new_issue", {
-      //   userName,
-      //   issueName,
-      //   ProfileImage,
-      //   status,
-      //   projectId,
-      // });
+      // Emit the new issue event to clients with the same project ID
+      // Emit the new issue event to clients with the same project ID
+      io.to(projectId).emit("new_issue", {
+        userName,
+        issueName,
+        ProfileImage,
+        status,
+        projectId,
+      });
     }
 
     res.json({
