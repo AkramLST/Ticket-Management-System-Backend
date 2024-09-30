@@ -224,6 +224,13 @@ router.post("/updateStatus", async (req, res) => {
         ProfileImage,
         projectId: id,
       });
+      io.to(id).emit("status_issue", {
+        userName,
+        issueName,
+        ProfileImage,
+        status,
+        projectId: id,
+      });
     }
     res.json({
       success: true,
