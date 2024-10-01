@@ -297,6 +297,11 @@ router.post("/updatedescription", async (req, res) => {
         projectId: id,
         ProfileImage,
       });
+      io.to(id).emit("Change_desc", {
+        userName,
+        issueName,
+        projectId: id,
+      });
     }
 
     res.json({
