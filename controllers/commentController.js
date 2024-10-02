@@ -1,5 +1,7 @@
 import commentModel from "../models/commentModel.js";
 import Express from "express";
+import issueLogModel from "../models/issueLogsModel.js";
+import { io } from "../index.js";
 const router = Express.Router();
 // import { createMentionNotifications } from "./notificationController.js";
 // import upload from "../middlewares/upload.js";
@@ -9,7 +11,16 @@ const router = Express.Router();
 // In your Express route handling the comment creation
 router.post("/create", async (req, res) => {
   try {
-    const { comment, userId, issueId, image, types, mention } = req.body;
+    const {
+      comment,
+      userId,
+      projectId,
+      issueName,
+      userName,
+      issueId,
+      image,
+      mention,
+    } = req.body;
     console.log(req.body);
 
     // Create a new comment document including the image field
@@ -29,6 +40,19 @@ router.post("/create", async (req, res) => {
     // await createMentionNotifications(comments, mentionedUserIds);
 
     const data = await comments.save();
+    if (data) {
+      await issueLogModel.create({
+        info: `${userName} Commentted on issue${issueName}`,
+        issueName,
+        projectId,
+      });
+      io.to(projectId).emit("comment_create", {
+        userName,
+        issueName,
+        comment,
+        projectId,
+      });
+    }
     res.status(201).json({
       data,
       message: "Comment added successfully",
