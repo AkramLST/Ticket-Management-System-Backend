@@ -36,30 +36,29 @@ import commentModel from "../models/commentModel.js";
 //     }
 //   };
 
-// router.post("/create", async (req, res) => {
-//     try {
-//       const { senderId, receiverId, commentId,issueId, message } = req.body;
+router.post("/create", async (req, res) => {
+  try {
+    const { senderId, receiverId, commentId, issueId, message } = req.body;
+    console.log(req.body);
+    const notification = new notificationModel({
+      senderId: senderId,
+      receiverId: receiverId,
+      commentId: commentId,
+      IssueId: issueId,
+      message: message,
+    });
 
-//       const notification = new notificationModel({
-//         senderId: senderId,
-//         receiverId: receiverId,
-//         commentId: commentId,
-//         IssueId:issueId,
-//         message: message,
-
-//       });
-
-//       const savedNotification = await notification.save();
-
-//       res.status(201).json({
-//         success: true,
-//         data: savedNotification,
-//       });
-//     } catch (error) {
-//       console.error(error);
-//       res.status(500).json({ message: "Internal server error" });
-//     }
-//   });
+    const savedNotification = await notification.save();
+    io.to(receiverId).emit("mention_notification", { message });
+    res.status(201).json({
+      success: true,
+      data: savedNotification,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 router.post("/all", async (req, res) => {
   try {
