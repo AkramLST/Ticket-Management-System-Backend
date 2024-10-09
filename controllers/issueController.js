@@ -414,5 +414,42 @@ router.post("/createboardissue", async (req, res) => {
     });
   }
 });
+router.post("/updateEstimation", async (req, res) => {
+  const { timeEstimation, issueid } = req.body;
+  console.log(req.body);
+  try {
+    const response = await issueModel.findByIdAndUpdate(
+      issueid, // Use the id directly
+      { $set: { timeEstimation } }, // Update the issue description
+      { new: true } // Return the updated document
+    );
+    // if (response) {
+    //   await issueLogModel.create({
+    //     info: `${userName} updated the description of issue`,
+    //     userName,
+    //     issueName,
+    //     projectId: id,
+    //     ProfileImage,
+    //   });
+    //   io.to(id).emit("Change_desc", {
+    //     userName,
+    //     issueName,
+    //     projectId: id,
+    //   });
+    // }
+
+    res.json({
+      success: true,
+      message: "Updated successfully",
+      data: response, // Optionally send back the updated issue
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while updating",
+      error: error.message, // Return the error message for debugging
+    });
+  }
+});
 
 export default router;

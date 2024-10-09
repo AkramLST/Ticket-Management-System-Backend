@@ -21,6 +21,7 @@ import commentRoutes from "./controllers/commentController.js";
 import notificationRoutes from "./controllers/notificationController.js";
 import orgRoutes from "./controllers/OrganizationController.js";
 import issueLogRoute from "./controllers/issueLogController.js";
+import timeController from "./controllers/timeController.js";
 // import 'bootstrap/dist/css/bootstrap.css'
 import session from "express-session";
 // import mongoStore from 'connect-mongo';
@@ -87,6 +88,7 @@ app.use("/comment", commentRoutes);
 app.use("/notification", notificationRoutes);
 app.use("/organization", orgRoutes);
 app.use("/logs", issueLogRoute);
+app.use("/time", timeController);
 // app.post('/register',async(req,res)=>{
 
 //     const{email,name,password}=req.body;
