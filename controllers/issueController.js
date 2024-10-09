@@ -129,6 +129,7 @@ router.post("/single", async (req, res) => {
 router.post("/singlepro", async (req, res) => {
   try {
     let { data } = req.body;
+    console.log(data);
     const IssueDetail = await issueModel.findById(data._id);
 
     res.status(200).json({
