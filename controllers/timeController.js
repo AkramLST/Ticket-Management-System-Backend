@@ -53,4 +53,41 @@ router.post("/create", async (req, res) => {
   }
 });
 
+router.get("/singleissueLog", async (req, res) => {
+  try {
+    const { issueId } = req.query;
+
+    // Use the issueId to filter comments
+    const commentsForIssue = await timeModel
+      .find({ issueId: issueId })
+      .populate("userId", "Name ProfileImage"); // Specify both fields here
+
+    res.status(200).json({
+      success: true,
+      data: commentsForIssue,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+// router.get("singleissueLog", async (req, res) => {
+//   const { issueId } = req.query;
+//   console.log("check id", req.query);
+//   try {
+//     const worklog = await timeModel.find({ issueId: issueId });
+//     res.json({
+//       success: true,
+//       data: worklog,
+//       message: "found",
+//     });
+//   } catch (error) {
+//     console.error("Error adding time log:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Error adding time log",
+//     });
+//   }
+// });
+
 export default router;
