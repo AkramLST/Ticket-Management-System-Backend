@@ -60,6 +60,19 @@ const issueSchema = new mongoose.Schema(
       type: String,
       default: "user",
     },
+    timeEstimation: {
+      type: String,
+    },
+    timeTracking: [
+      {
+        TrackedTime: String,
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "users",
+        },
+        userName: String,
+      },
+    ],
     date: {
       type: Date,
       default: Date.now, // Set the default value to the current date and time

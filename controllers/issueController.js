@@ -4,6 +4,7 @@ import Express from "express";
 import nodemailer from "nodemailer";
 import userModel from "../models/userModel.js";
 import issueLogModel from "../models/issueLogsModel.js";
+import { io } from "../index.js";
 // import { io } from "../index.js";
 const router = Express.Router();
 
@@ -128,6 +129,7 @@ router.post("/single", async (req, res) => {
 router.post("/singlepro", async (req, res) => {
   try {
     let { data } = req.body;
+    console.log(data);
     const IssueDetail = await issueModel.findById(data._id);
 
     res.status(200).json({
@@ -223,6 +225,13 @@ router.post("/updateStatus", async (req, res) => {
         ProfileImage,
         projectId: id,
       });
+      io.to(id).emit("status_issue", {
+        userName,
+        issueName,
+        ProfileImage,
+        status,
+        projectId: id,
+      });
     }
     res.json({
       success: true,
@@ -288,6 +297,11 @@ router.post("/updatedescription", async (req, res) => {
         issueName,
         projectId: id,
         ProfileImage,
+      });
+      io.to(id).emit("Change_desc", {
+        userName,
+        issueName,
+        projectId: id,
       });
     }
 
@@ -378,14 +392,15 @@ router.post("/createboardissue", async (req, res) => {
         projectId,
       });
 
-      // Emit the new issue event to all connected clients
-      // io.emit("new_issue", {
-      //   userName,
-      //   issueName,
-      //   ProfileImage,
-      //   status,
-      //   projectId,
-      // });
+      // Emit the new issue event to clients with the same project ID
+      // Emit the new issue event to clients with the same project ID
+      io.to(projectId).emit("new_issue", {
+        userName,
+        issueName,
+        ProfileImage,
+        status,
+        projectId,
+      });
     }
 
     res.json({
@@ -397,6 +412,43 @@ router.post("/createboardissue", async (req, res) => {
     res.json({
       success: false,
       message: "Server-side error",
+    });
+  }
+});
+router.post("/updateEstimation", async (req, res) => {
+  const { timeEstimation, issueid } = req.body;
+  console.log(req.body);
+  try {
+    const response = await issueModel.findByIdAndUpdate(
+      issueid, // Use the id directly
+      { $set: { timeEstimation } }, // Update the issue description
+      { new: true } // Return the updated document
+    );
+    // if (response) {
+    //   await issueLogModel.create({
+    //     info: `${userName} updated the description of issue`,
+    //     userName,
+    //     issueName,
+    //     projectId: id,
+    //     ProfileImage,
+    //   });
+    //   io.to(id).emit("Change_desc", {
+    //     userName,
+    //     issueName,
+    //     projectId: id,
+    //   });
+    // }
+
+    res.json({
+      success: true,
+      message: "Updated successfully",
+      data: response, // Optionally send back the updated issue
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while updating",
+      error: error.message, // Return the error message for debugging
     });
   }
 });

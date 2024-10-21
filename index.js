@@ -1,5 +1,7 @@
 import express from "express";
+import http from "http"; // Add this to use the HTTP server with Socket.io
 import cors from "cors";
+import { Server } from "socket.io";
 import "./cons.js";
 import "dotenv/config";
 import multer from "multer";
@@ -19,23 +21,43 @@ import commentRoutes from "./controllers/commentController.js";
 import notificationRoutes from "./controllers/notificationController.js";
 import orgRoutes from "./controllers/OrganizationController.js";
 import issueLogRoute from "./controllers/issueLogController.js";
+import timeController from "./controllers/timeController.js";
 // import 'bootstrap/dist/css/bootstrap.css'
 import session from "express-session";
 // import mongoStore from 'connect-mongo';
 // import mongoose from 'mongoose';
 // import multer from 'multer';
 const app = express();
-app.use(
-  cors({
-    origin: "https://lst-ticketing-system.netlify.app",
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-    credentials: true,
-  })
-);
-// app.use(cors());
+const server = http.createServer(app); // Create HTTP server
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Replace with your frontend origin
+    methods: ["GET", "POST"],
+  },
+});
+// app.use(
+//   cors({
+//     origin: "https://lst-ticketing-system.netlify.app",
+//     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+//     credentials: true,
+//   })
+// );
+app.use(cors());
 const port = 3001;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+io.on("connection", (socket) => {
+  console.log("A user connected");
+
+  socket.on("join_project", ({ projectId }) => {
+    socket.join(projectId); // Join the room for this project
+    console.log(`User joined project room: ${projectId}`);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected");
+  });
+});
 // app.use(bodyParser.json({ limit: "10mb" }));
 // app.use(bodyParser.urlencoded({ limit: "10mb" }));
 // const sessionStore=new mongoStore({
@@ -66,6 +88,7 @@ app.use("/comment", commentRoutes);
 app.use("/notification", notificationRoutes);
 app.use("/organization", orgRoutes);
 app.use("/logs", issueLogRoute);
+app.use("/time", timeController);
 // app.post('/register',async(req,res)=>{
 
 //     const{email,name,password}=req.body;
@@ -286,10 +309,12 @@ app.get("/test", async (req, res) => {
   res.send("running");
   console.log("running");
 });
-const server = app.listen(0, () => {
-  const port = server.address().port;
-  console.log(`Server is running on port ${port}`);
-});
-// app.listen(port, () => {
+// const serve = server.listen(0, () => {
+//   const port = serve.address().port;
 //   console.log(`Server is running on port ${port}`);
 // });
+server.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
+
+export { io };
