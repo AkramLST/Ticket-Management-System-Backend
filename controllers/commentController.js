@@ -1,7 +1,7 @@
 import commentModel from "../models/commentModel.js";
 import Express from "express";
 import issueLogModel from "../models/issueLogsModel.js";
-import { io } from "../index.js";
+// import { io } from "../index.js";
 const router = Express.Router();
 // import { createMentionNotifications } from "./notificationController.js";
 // import upload from "../middlewares/upload.js";

@@ -1,7 +1,7 @@
 import commentModel from "../models/commentModel.js";
 import Express from "express";
 import issueLogModel from "../models/issueLogsModel.js";
-import { io } from "../index.js";
+// import { io } from "../index.js";
 import timeModel from "../models/timeTrackingModel.js";
 import issueModel from "../models/issueModel.js";
 const router = Express.Router();

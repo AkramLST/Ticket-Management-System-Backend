@@ -28,13 +28,13 @@ import session from "express-session";
 // import mongoose from 'mongoose';
 // import multer from 'multer';
 const app = express();
-const server = http.createServer(app); // Create HTTP server
-const io = new Server(server, {
-  cors: {
-    origin: "*", // Replace with your frontend origin
-    methods: ["GET", "POST"],
-  },
-});
+// const server = http.createServer(app);
+// const io = new Server(server, {
+//   cors: {
+//     origin: "*",
+//     methods: ["GET", "POST"],
+//   },
+// });
 // app.use(
 //   cors({
 //     origin: "https://lst-ticketing-system.netlify.app",
@@ -46,18 +46,18 @@ app.use(cors());
 const port = 3001;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-io.on("connection", (socket) => {
-  console.log("A user connected");
+// io.on("connection", (socket) => {
+//   console.log("A user connected");
 
-  socket.on("join_project", ({ projectId }) => {
-    socket.join(projectId); // Join the room for this project
-    console.log(`User joined project room: ${projectId}`);
-  });
+//   socket.on("join_project", ({ projectId }) => {
+//     socket.join(projectId);
+//     console.log(`User joined project room: ${projectId}`);
+//   });
 
-  socket.on("disconnect", () => {
-    console.log("User disconnected");
-  });
-});
+//   socket.on("disconnect", () => {
+//     console.log("User disconnected");
+//   });
+// });
 // app.use(bodyParser.json({ limit: "10mb" }));
 // app.use(bodyParser.urlencoded({ limit: "10mb" }));
 // const sessionStore=new mongoStore({
@@ -313,8 +313,6 @@ app.get("/test", async (req, res) => {
 //   const port = serve.address().port;
 //   console.log(`Server is running on port ${port}`);
 // });
-server.listen(port, () => {
+app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
-
-export { io };
