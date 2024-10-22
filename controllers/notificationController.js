@@ -49,11 +49,11 @@ router.post("/create", async (req, res) => {
     });
 
     const savedNotification = await notification.save();
-    io.to(receiverId).emit("mention_notification", { message });
-    res.status(201).json({
-      success: true,
-      data: savedNotification,
-    });
+    // io.to(receiverId).emit("mention_notification", { message });
+    // res.status(201).json({
+    //   success: true,
+    //   data: savedNotification,
+    // });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });

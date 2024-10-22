@@ -46,12 +46,12 @@ router.post("/create", async (req, res) => {
         issueName,
         projectId,
       });
-      io.to(projectId).emit("comment_create", {
-        userName,
-        issueName,
-        comment,
-        projectId,
-      });
+      // io.to(projectId).emit("comment_create", {
+      //   userName,
+      //   issueName,
+      //   comment,
+      //   projectId,
+      // });
     }
     res.status(201).json({
       data,

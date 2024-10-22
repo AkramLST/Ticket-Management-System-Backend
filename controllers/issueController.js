@@ -225,13 +225,13 @@ router.post("/updateStatus", async (req, res) => {
         ProfileImage,
         projectId: id,
       });
-      io.to(id).emit("status_issue", {
-        userName,
-        issueName,
-        ProfileImage,
-        status,
-        projectId: id,
-      });
+      // io.to(id).emit("status_issue", {
+      //   userName,
+      //   issueName,
+      //   ProfileImage,
+      //   status,
+      //   projectId: id,
+      // });
     }
     res.json({
       success: true,
@@ -298,11 +298,11 @@ router.post("/updatedescription", async (req, res) => {
         projectId: id,
         ProfileImage,
       });
-      io.to(id).emit("Change_desc", {
-        userName,
-        issueName,
-        projectId: id,
-      });
+      // io.to(id).emit("Change_desc", {
+      //   userName,
+      //   issueName,
+      //   projectId: id,
+      // });
     }
 
     res.json({
@@ -394,13 +394,13 @@ router.post("/createboardissue", async (req, res) => {
 
       // Emit the new issue event to clients with the same project ID
       // Emit the new issue event to clients with the same project ID
-      io.to(projectId).emit("new_issue", {
-        userName,
-        issueName,
-        ProfileImage,
-        status,
-        projectId,
-      });
+      // io.to(projectId).emit("new_issue", {
+      //   userName,
+      //   issueName,
+      //   ProfileImage,
+      //   status,
+      //   projectId,
+      // });
     }
 
     res.json({
