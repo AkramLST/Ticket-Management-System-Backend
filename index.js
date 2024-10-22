@@ -35,14 +35,14 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
   },
 });
-// app.use(
-//   cors({
-//     origin: "https://lst-ticketing-system.netlify.app",
-//     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-//     credentials: true,
-//   })
-// );
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://lst-ticketing-system.netlify.app",
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true,
+  })
+);
+// app.use(cors());
 const port = 3001;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -309,12 +309,12 @@ app.get("/test", async (req, res) => {
   res.send("running");
   console.log("running");
 });
-// const serve = server.listen(0, () => {
-//   const port = serve.address().port;
-//   console.log(`Server is running on port ${port}`);
-// });
-server.listen(port, () => {
-  console.log(`Server is running on the port ${port}`);
+const serve = server.listen(0, () => {
+  const port = serve.address().port;
+  console.log(`Server is running on port ${port}`);
 });
+// server.listen(port, () => {
+//   console.log(`Server is running on the port ${port}`);
+// });
 
 export { io };
