@@ -29,7 +29,7 @@ import session from "express-session";
 // import multer from 'multer';
 const app = express();
 const server = http.createServer(app); // Create HTTP server
-const io = new Server(server, {
+export const io = new Server(server, {
   cors: {
     origin: "https://lst-ticketing-system.netlify.app", // Replace with your frontend origin
     methods: ["GET", "POST"],
@@ -316,5 +316,3 @@ app.get("/test", async (req, res) => {
 server.listen(port, () => {
   console.log(`Server is running on the portal ${port}`);
 });
-
-export { io };
