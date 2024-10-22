@@ -31,7 +31,7 @@ const app = express();
 const server = http.createServer(app); // Create HTTP server
 const io = new Server(server, {
   cors: {
-    origin: "*", // Replace with your frontend origin
+    origin: "https://lst-ticketing-system.netlify.app", // Replace with your frontend origin
     methods: ["GET", "POST"],
   },
 });
