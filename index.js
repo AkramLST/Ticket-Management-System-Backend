@@ -314,7 +314,9 @@ app.get("/test", async (req, res) => {
 //   console.log(`Server is running on port ${port}`);
 // });
 server.listen(port, () => {
-  console.log(`Server is running on the port ${port}`);
+  console.log(
+    `Server is running on the port and will check this as port ${port}`
+  );
 });
 
 export { io };
