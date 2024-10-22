@@ -4,7 +4,7 @@ import Express from "express";
 import nodemailer from "nodemailer";
 import userModel from "../models/userModel.js";
 import issueLogModel from "../models/issueLogsModel.js";
-import { io } from "../index.js";
+// import { io } from "../index.js";
 // import { io } from "../index.js";
 const router = Express.Router();
 
