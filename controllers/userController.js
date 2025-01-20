@@ -5,6 +5,8 @@ import bcrypt, { compare } from "bcrypt";
 const router = Express.Router();
 import jwt from "jsonwebtoken";
 import upload from "../multer.js";
+import { passwordReset } from "../helper/mailer.js";
+import { forgotPassword } from "../modules/forgotPassword.js";
 
 // ... rest of your code
 
@@ -21,11 +23,10 @@ import upload from "../multer.js";
 
 // const JWT_SECRET = 'your-secret-key';
 router.post("/register", upload.single("image"), async (req, res) => {
-  console.log("mybody", req.body);
   const { username, email, password, gender, role, id, orname, image } =
     req.body;
   // const { file } = req;
-  // const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await bcrypt.hash(password, 10);
   try {
     const existingUser = await userModel.findOne({ Email: email });
     if (existingUser) {
@@ -42,7 +43,7 @@ router.post("/register", upload.single("image"), async (req, res) => {
       Name: username,
       Email: email,
       Gender: gender,
-      Password: password,
+      Password: hashedPassword,
       Role: role,
       OrganizationId: id,
       OrganizationName: orname,
@@ -50,8 +51,6 @@ router.post("/register", upload.single("image"), async (req, res) => {
       // ProfileImage: file ? file.path : undefined,
       // profileImage: data.req.file,
     });
-
-    console.log(user);
 
     const redisteredUser = await user.save();
     res.status(201).json({
@@ -81,17 +80,19 @@ router.post("/login", async (req, res) => {
       console.log("user found");
     }
 
-    //  const  passwordMatch = bcrypt.compare(password, user.Password);
-    if (password !== user.Password) {
-      console.log("password not matched");
-      return res.status(401).json({ error: "password not matched" });
-    }
-
-    const token = jwt.sign({ userId: user._id }, "your-secret-key");
-    res.status(200).json({
-      user,
-      token,
-    });
+    bcrypt.compare(password, user.Password, (err, result) => {
+      if(!result)
+      {
+        return res.status(401).json({ error: "password not matched" });
+      }
+      else{
+        const token = jwt.sign({ userId: user._id }, "your-secret-key");
+        res.status(200).json({
+          user,
+          token,
+        });
+      }
+     });
   } catch (error) {
     res.status(500).json({ error: "Login failed" });
   }
@@ -277,5 +278,66 @@ router.post("/update", async (req, res) => {
     res.status(500).json({ success: false, message: "Error updating issue" });
   }
 });
+
+router.post("/forgotPassword", async(req, res) => {
+  try{
+    const { email } = req.body;
+    const response = await forgotPassword(email);  // module with forgot password implementatio in node with mongoDB
+    console.log("response : ",response )
+    if(response === true)
+    {
+      console.log("returned true")
+      res.json({
+        success: true,
+        message: "Reset Password Email Sent",
+      });
+    }
+    else{
+      res.json({
+        success: false,
+        message: response,
+      });
+    }      
+  }
+  catch(err){
+    console.error("Error updating users:", err);
+    res.status(500).json({ success: false, message: "Error updating issue" });
+  }
+});
+
+router.post("/resetPassword", async (req, res) => {
+  const {id , token, newPassword} = req.body;
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  try{
+    
+    jwt.verify(token, "your-secret-key", async (err, decode) => {
+      if(err)
+        {
+          res.status(401).json({ Status: "Token Invalid", message: "Invalid Token", error: err });
+        }
+        else{
+          const user = await userModel.findByIdAndUpdate(id, { Password: hashedPassword }, { new: true });
+          if(user)
+          {
+            res.json({
+              success: true,
+              message: "Password updated sucessfully!"
+            });
+          }
+          else{
+            res.json({
+              success: false,
+              message: "Failed to update password!"
+            });
+          }
+        }
+    });
+  }
+  catch(error)
+  {
+    console.error("Error updating users:", error);
+    res.status(500).json({ success: false, message: "Error updating password" });
+  }
+})
 
 export default router;

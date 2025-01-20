@@ -16,6 +16,7 @@ const issueSchema = new mongoose.Schema(
     },
     priority: {
       type: String,
+      default:"low"
       //required:true
     },
     startDate: {
