@@ -108,6 +108,22 @@ router.post("/all", async (req, res) => {
   }
 });
 
+router.post("/issuesCount", async (req, res) => {
+  try {
+    const { id } = req.body;
+    const issuesCount = await issueModel.countDocuments({ projectId: id });
+    res.status(200).json({
+      success: true,
+      count: issuesCount,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while counting issues.",
+    });
+  }
+});
 //get single issue
 router.post("/single", async (req, res) => {
   try {

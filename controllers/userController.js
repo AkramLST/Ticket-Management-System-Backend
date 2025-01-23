@@ -156,7 +156,7 @@ router.post("/logout", async (req, res) => {
 router.post("/all", async (req, res) => {
   const { id } = req.body;
   try {
-    const users = await userModel.find({ OrganizationId: id });
+    const users = await userModel.find({ OrganizationId: id },"_id Name ProfileImage");
 
     res.status(200).json({
       success: true,
@@ -173,7 +173,7 @@ router.post("/all", async (req, res) => {
 router.post("/allusers", async (req, res) => {
   const { id } = req.body;
   try {
-    const users = await userModel.find();
+    const users = await userModel.find({}, "_id Name ProfileImage");
 
     res.status(200).json({
       success: true,
@@ -193,7 +193,7 @@ router.post("/allSelected", async (req, res) => {
   try {
     const userIds = req.body.data;
 
-    const users = await userModel.find({ _id: { $in: userIds } }); // Use $in to filter by provided IDs
+    const users = await userModel.find({ _id: { $in: userIds } }, "_id Name ProfileImage"); // Use $in to filter by provided IDs
 
     res.status(200).json({
       success: true,

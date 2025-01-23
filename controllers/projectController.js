@@ -59,7 +59,10 @@ router.post("/create", async (req, res) => {
 
 router.get("/all", async (req, res) => {
   try {
-    const projects = await projectModel.find().populate("Assignedto");
+    const projects = await projectModel.find().populate({
+      path: "Assignedto",
+      select:"-Email -Password -Assignedto -Role -OrganizationId -ProfileImage"
+    });
     res.status(200).json({
       succes: true,
       data: projects,
@@ -88,7 +91,10 @@ router.post("/allsuperadminProjects", async (req, res) => {
   try {
     const projects = await projectModel
       .find({ OrganizationId: id })
-      .populate("Assignedto");
+      .populate({
+        path: "Assignedto",
+        select:"-Email -Password -Assignedto -Role -OrganizationId -ProfileImage"
+      });
 
     if (projects) {
       res.status(200).json({
