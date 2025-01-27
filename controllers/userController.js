@@ -263,9 +263,10 @@ router.get("/user/:userId", async (req, res) => {
 router.post("/update", async (req, res) => {
   try {
     const { _id, Name, Email, Password, image } = req.body.data;
+    const hashedpasword = await bcrypt.hash(Password, 10);
     const updatedUser = await userModel.findByIdAndUpdate(
       _id,
-      { Name, Email, Password, ProfileImage: image },
+      { Name:Name, Email:Email, Password: hashedpasword, ProfileImage: image },
       { new: true }
     );
 
