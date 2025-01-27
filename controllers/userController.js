@@ -264,11 +264,23 @@ router.post("/update", async (req, res) => {
   try {
     const { _id, Name, Email, Password, image } = req.body.data;
     const hashedpasword = await bcrypt.hash(Password, 10);
-    const updatedUser = await userModel.findByIdAndUpdate(
-      _id,
-      { Name:Name, Email:Email, Password: hashedpasword, ProfileImage: image },
-      { new: true }
-    );
+    var updatedUser;
+    if(Password != "" || null)
+    {
+      updatedUser = await userModel.findByIdAndUpdate(
+        _id,
+        { Name:Name, Email:Email, Password: hashedpasword, ProfileImage: image },
+        { new: true }
+      );
+    }
+    else{
+      updatedUser = await userModel.findByIdAndUpdate(
+        _id,
+        { Name:Name, Email:Email, ProfileImage: image },
+        { new: true }
+      );
+    }
+    
 
     res.json({
       success: true,
