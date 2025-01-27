@@ -263,15 +263,28 @@ router.get("/user/:userId", async (req, res) => {
 router.post("/update", async (req, res) => {
   try {
     const { _id, Name, Email, Password, image } = req.body.data;
-    const updatedUser = await userModel.findByIdAndUpdate(
-      _id,
-      { Name, Email, Password, ProfileImage: image },
-      { new: true }
-    );
+    const hashedPassword = await bcrypt.hash(Password, 10);
+    var updateUser;
+    if(Password != "" || null)
+    {
+      updateUser = await userModel.findByIdAndUpdate(
+        _id,
+        { Name: Name, Email: Email, Password: hashedPassword, ProfileImage: image },
+        { new: true }
+      );
+  
+    }
+    else{
+      updateUser = await userModel.findByIdAndUpdate(
+        _id,
+        { Name: Name, Email:Email, ProfileImage: image },
+        { new: true }
+      );
+    }
 
     res.json({
       success: true,
-      data: updatedUser,
+      data: updateUser,
     });
   } catch (error) {
     console.error("Error updating users:", error);
