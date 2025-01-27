@@ -294,6 +294,29 @@ router.post("/updateimageurl", async (req, res) => {
     });
   }
 });
+//getIssueDetail
+router.post("/getIssueDetail", async (req, res) => {
+  const { issueid } =
+    req.body;
+
+  try {
+    const response = await issueModel.findById(
+      issueid, // Use the id directly
+    );
+
+    res.json({
+      success: true,
+      message: "Updated successfully",
+      data: response, // Optionally send back the updated issue
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while updating",
+      error: error.message, // Return the error message for debugging
+    });
+  }
+});
 
 router.post("/updatedescription", async (req, res) => {
   const { issueDescription, issueName, issueid, id, userName, ProfileImage } =
