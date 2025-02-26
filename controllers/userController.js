@@ -1,4 +1,5 @@
 import userModel from "../models/userModel.js";
+import attendanceModel from "../models/attendanceModel.js";
 import Express, { response } from "express";
 import bcrypt, { compare } from "bcrypt";
 // import multer from "multer";
@@ -81,18 +82,17 @@ router.post("/login", async (req, res) => {
     }
 
     bcrypt.compare(password, user.Password, (err, result) => {
-      if(!result)
-      {
+      if (!result) {
         return res.status(401).json({ error: "password not matched" });
       }
-      else{
+      else {
         const token = jwt.sign({ userId: user._id }, "your-secret-key");
         res.status(200).json({
           user,
           token,
         });
       }
-     });
+    });
   } catch (error) {
     res.status(500).json({ error: "Login failed" });
   }
@@ -156,7 +156,7 @@ router.post("/logout", async (req, res) => {
 router.post("/all", async (req, res) => {
   const { id } = req.body;
   try {
-    const users = await userModel.find({ OrganizationId: id },"_id Name ProfileImage");
+    const users = await userModel.find({ OrganizationId: id }, "_id Name ProfileImage");
 
     res.status(200).json({
       success: true,
@@ -265,22 +265,21 @@ router.post("/update", async (req, res) => {
     const { _id, Name, Email, Password, image } = req.body.data;
     const hashedpasword = await bcrypt.hash(Password, 10);
     var updatedUser;
-    if(Password != "" || null)
-    {
+    if (Password != "" || null) {
       updatedUser = await userModel.findByIdAndUpdate(
         _id,
-        { Name:Name, Email:Email, Password: hashedpasword, ProfileImage: image },
+        { Name: Name, Email: Email, Password: hashedpasword, ProfileImage: image },
         { new: true }
       );
     }
-    else{
+    else {
       updatedUser = await userModel.findByIdAndUpdate(
         _id,
-        { Name:Name, Email:Email, ProfileImage: image },
+        { Name: Name, Email: Email, ProfileImage: image },
         { new: true }
       );
     }
-    
+
 
     res.json({
       success: true,
@@ -292,65 +291,152 @@ router.post("/update", async (req, res) => {
   }
 });
 
-router.post("/forgotPassword", async(req, res) => {
-  try{
+router.post("/forgotPassword", async (req, res) => {
+  try {
     const { email } = req.body;
     const response = await forgotPassword(email);  // module with forgot password implementatio in node with mongoDB
-    console.log("response : ",response )
-    if(response === true)
-    {
+    console.log("response : ", response)
+    if (response === true) {
       console.log("returned true")
       res.json({
         success: true,
         message: "Reset Password Email Sent",
       });
     }
-    else{
+    else {
       res.json({
         success: false,
         message: response,
       });
-    }      
+    }
   }
-  catch(err){
+  catch (err) {
     console.error("Error updating users:", err);
     res.status(500).json({ success: false, message: "Error updating issue" });
   }
 });
 
 router.post("/resetPassword", async (req, res) => {
-  const {id , token, newPassword} = req.body;
+  const { id, token, newPassword } = req.body;
   const hashedPassword = await bcrypt.hash(newPassword, 10);
-  try{
-    
+  try {
+
     jwt.verify(token, "your-secret-key", async (err, decode) => {
-      if(err)
-        {
-          res.status(401).json({ Status: "Token Invalid", message: "Invalid Token", error: err });
+      if (err) {
+        res.status(401).json({ Status: "Token Invalid", message: "Invalid Token", error: err });
+      }
+      else {
+        const user = await userModel.findByIdAndUpdate(id, { Password: hashedPassword }, { new: true });
+        if (user) {
+          res.json({
+            success: true,
+            message: "Password updated sucessfully!"
+          });
         }
-        else{
-          const user = await userModel.findByIdAndUpdate(id, { Password: hashedPassword }, { new: true });
-          if(user)
-          {
-            res.json({
-              success: true,
-              message: "Password updated sucessfully!"
-            });
-          }
-          else{
-            res.json({
-              success: false,
-              message: "Failed to update password!"
-            });
-          }
+        else {
+          res.json({
+            success: false,
+            message: "Failed to update password!"
+          });
         }
+      }
     });
   }
-  catch(error)
-  {
+  catch (error) {
     console.error("Error updating users:", error);
     res.status(500).json({ success: false, message: "Error updating password" });
   }
-})
+});
+
+router.post("/checkIn", async (req, res) => {
+  try {
+    const { userId, checkInTime, userName, organizationID } = req.body;
+    const attendance = new attendanceModel({
+      userId: userId,
+      userName: userName,
+      organizationID: organizationID,
+      checkInTime: checkInTime
+    });
+
+    const save = await attendance.save();
+    if (save) {
+      console.log("Saved");
+      res.json({ message: "Checked In Successfully", data: save });
+    }
+    else {
+      res.json({ message: "Checked In Failed" });
+    }
+  }
+  catch (error) {
+    res.json({ message: "Error, Checked In Failed", error: error });
+  }
+
+});
+
+router.post("/checkout", async (req, res) => {
+  try {
+    const { userId, checkOutTime } = req.body;
+
+    // Ensure checkOutTime is a Date object
+    const checkOutDate = new Date(checkOutTime);
+    const startOfDay = new Date(checkOutDate.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(checkOutDate.setHours(23, 59, 59, 999));
+
+    // Find the existing attendance record for the same user and date
+    const attendance = await attendanceModel.findOne({
+      userId: userId,
+      checkInTime: { $gte: startOfDay, $lte: endOfDay }
+    });
+
+    if (attendance) {
+      // Calculate total working time (difference in milliseconds)
+      const totalWorkingTime = new Date(checkOutTime) - attendance.checkInTime;
+
+      // Update the existing record with checkOutTime and totalWorkingTime
+      attendance.checkOutTime = checkOutTime;
+      attendance.totalWorkingTime = totalWorkingTime;
+      attendance.updatedAt = new Date(); // Auto-updated with timestamps
+
+      const updatedRecord = await attendance.save();
+      res.json({ message: "Checked Out Successfully", data: updatedRecord });
+    } else {
+      res.json({ message: "No Check-In record found for this date" });
+    }
+  } catch (error) {
+    res.json({ message: "Error, Check-Out Failed", error: error });
+  }
+});
+
+router.post("/lastCheckIn", async (req, res) => {
+  try {
+    const { id } = req.body;
+    const latestAttendance = await attendanceModel.findOne({ userId: id })
+      .sort({ checkInTime: -1 })
+      .select("checkInTime");
+
+    if (latestAttendance) {
+      res.json({ message: "Latest Check-In Found", checkInTime: latestAttendance.checkInTime });
+    } else {
+      res.json({ message: "No Check-In record found for this user", checkInTime: null });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching last check-in", error: error });
+  }
+});
+
+router.get("/allAttendance", async (req, res) => {
+  try {
+    const allAttendance = await attendanceModel.find();
+
+    if (allAttendance.length > 0) {
+      res.json({ message: "All attendance records fetched", data: allAttendance });
+      console.log(allAttendance);
+    } else {
+      res.status(404).json({ message: "No attendance records found" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching attendance records", error });
+  }
+});
 
 export default router;
