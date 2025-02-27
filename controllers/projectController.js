@@ -59,7 +59,7 @@ router.post("/create", async (req, res) => {
 
 router.get("/all", async (req, res) => {
   try {
-    const projects = await projectModel.find().populate({
+    const projects = await projectModel.find().sort({ _id: -1 }).populate({
       path: "Assignedto",
       select:"-Email -Password -Assignedto -Role -OrganizationId -ProfileImage"
     });
@@ -74,7 +74,7 @@ router.get("/all", async (req, res) => {
 router.post("/allUserProjects", async (req, res) => {
   const { id } = req.body;
   try {
-    const projects = await projectModel.find({ Assignedto: id });
+    const projects = await projectModel.find({ Assignedto: id }).sort({ _id: -1 });
 
     if (projects) {
       res.status(200).json({
@@ -91,6 +91,7 @@ router.post("/allsuperadminProjects", async (req, res) => {
   try {
     const projects = await projectModel
       .find({ OrganizationId: id })
+      .sort({ _id: -1 })
       .populate({
         path: "Assignedto",
         select:"-Email -Password -Assignedto -Role -OrganizationId -ProfileImage"
