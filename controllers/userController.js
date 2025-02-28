@@ -411,11 +411,11 @@ router.post("/lastCheckIn", async (req, res) => {
   try {
     const { id } = req.body;
     const latestAttendance = await attendanceModel.findOne({ userId: id })
-      .sort({ checkInTime: -1 })
-      .select("checkInTime");
+      .sort({ _id: -1 })
+      .select('checkInTime checkOutTime');
 
     if (latestAttendance) {
-      res.json({ message: "Latest Check-In Found", checkInTime: latestAttendance.checkInTime });
+      res.json({ message: "Latest Check-In Found", checkInTime: latestAttendance.checkInTime, checkOutTime:latestAttendance.checkOutTime });
     } else {
       res.json({ message: "No Check-In record found for this user", checkInTime: null });
     }
