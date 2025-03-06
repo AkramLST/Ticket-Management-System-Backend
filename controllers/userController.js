@@ -426,7 +426,7 @@ router.post("/lastCheckIn", async (req, res) => {
 
 router.get("/allAttendance", async (req, res) => {
   try {
-    const allAttendance = await attendanceModel.find();
+    const allAttendance = await attendanceModel.find().sort({_id: -1});
 
     if (allAttendance.length > 0) {
       res.json({ message: "All attendance records fetched", data: allAttendance });
