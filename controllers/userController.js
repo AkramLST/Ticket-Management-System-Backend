@@ -375,12 +375,12 @@ router.post("/checkIn", async (req, res) => {
 
 router.post("/checkout", async (req, res) => {
   try {
-    const { userId, checkOutTime } = req.body;
+    const { userId, checkOutTime, checkInTime } = req.body;
 
     // Ensure checkOutTime is a Date object
-    const checkOutDate = new Date(checkOutTime);
-    const startOfDay = new Date(checkOutDate.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(checkOutDate.setHours(23, 59, 59, 999));
+    const checkInDate = new Date(checkInTime);
+    const startOfDay = new Date(checkInDate.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(checkInDate.setHours(23, 59, 59, 999));
 
     // Find the existing attendance record for the same user and date
     const attendance = await attendanceModel.findOne({
