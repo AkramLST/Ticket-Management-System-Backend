@@ -424,15 +424,18 @@ router.post("/lastCheckIn", async (req, res) => {
   }
 });
 
-router.get("/allAttendance", async (req, res) => {
+router.post("/allAttendance", async (req, res) => {
   try {
-    const allAttendance = await attendanceModel.find().sort({_id: -1});
+    const { attendanceDate } = req.body;
+    const allAttendance = await attendanceModel.find(
+      {
+        createdAt: { $gte: new Date(attendanceDate), $lt: new Date(attendanceDate + "T23:59:59.999Z") }
+      }).sort({_id: -1});
 
     if (allAttendance.length > 0) {
       res.json({ message: "All attendance records fetched", data: allAttendance });
-      console.log(allAttendance);
     } else {
-      res.status(404).json({ message: "No attendance records found" });
+      res.json({ message: "No attendance records found", data:[] });
     }
   } catch (error) {
     res.status(500).json({ message: "Error fetching attendance records", error });

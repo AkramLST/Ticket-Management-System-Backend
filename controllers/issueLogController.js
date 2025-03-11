@@ -1,14 +1,19 @@
 import express from "express";
 import issueLogModel from "../models/issueLogsModel.js";
-
 const router = express.Router();
 
 router.get("/getissueLog", async (req, res) => {
-  const { projectId } = req.query;
-  console.log("request hit logs api", req.query);
+  const { issueId } = req.query;
   try {
+    if( issueId === null || issueId === undefined)
+    {
+      return res.json({
+        success: true,
+        data: [],
+      });
+    }
     const response = await issueLogModel
-      .find({ projectId })
+      .find({ issueId: issueId })
       .sort({ _id: -1 })
       .limit(10);
     res.json({

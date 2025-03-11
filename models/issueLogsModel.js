@@ -4,6 +4,10 @@ const logSchema = new mongoose.Schema(
     info: {
       type: String,
     },
+    issueId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "issues",
+    },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "users",
