@@ -240,6 +240,7 @@ router.post("/updateStatus", async (req, res) => {
         issueName,
         ProfileImage,
         projectId: id,
+        issueId: issueId,
       });
       // io.to(id).emit("status_issue", {
       //   userName,
@@ -335,6 +336,7 @@ router.post("/updatedescription", async (req, res) => {
         userName,
         issueName,
         projectId: id,
+        issueId: issueid,
         ProfileImage,
       });
       // io.to(id).emit("Change_desc", {
@@ -427,6 +429,7 @@ router.post("/createboardissue", async (req, res) => {
         userName,
         issueName,
         userId,
+        issueId: issue._id,
         ProfileImage,
         projectId,
       });
