@@ -16,11 +16,23 @@ router.get("/getissueLog", async (req, res) => {
       .find({ issueId: issueId })
       .sort({ _id: -1 })
       .limit(10);
+      if(response)
+      {
+        res.json({
+          success: true,
+          data: response,
+        });
+      }
+      else{
+        res.json({
+          success: false
+        });
+      }
+  } catch (error) {
     res.json({
-      success: true,
-      data: response,
+      success: false
     });
-  } catch (error) {}
+  }
 });
 
 export default router;
