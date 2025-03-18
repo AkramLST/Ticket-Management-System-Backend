@@ -8,7 +8,7 @@ import multer from "multer";
 import path from "path";
 // import nodeMailer from 'nodemailer'
 
-// import bodyParser from "body-parser";
+import bodyParser from "body-parser";
 
 // import scoreM from './modals/scoreM.js';
 // import assinP from './modals/assinP.js';
@@ -28,6 +28,8 @@ import session from "express-session";
 // import mongoose from 'mongoose';
 // import multer from 'multer';
 const app = express();
+app.use(bodyParser.json({ limit: "20mb" })); // Set limit as needed
+app.use(bodyParser.urlencoded({ limit: "20mb", extended: true }));
 // const server = http.createServer(app);
 // const io = new Server(server, {
 //   cors: {
