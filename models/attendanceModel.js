@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { type } from "os";
 
 const attendanceSchema = new mongoose.Schema({
     userId: { 
@@ -25,6 +26,12 @@ const attendanceSchema = new mongoose.Schema({
     totalWorkingTime: {
         type: Number 
     },
+    latitude:{
+        type: Number
+    },
+    longitude:{
+        type: Number
+    }
 },{ timestamps: true });
 
 const attendanceModel = mongoose.model('attendance', attendanceSchema);

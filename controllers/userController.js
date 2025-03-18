@@ -350,12 +350,14 @@ router.post("/resetPassword", async (req, res) => {
 
 router.post("/checkIn", async (req, res) => {
   try {
-    const { userId, checkInTime, userName, organizationID } = req.body;
+    const { userId, checkInTime, userName, organizationID, latitude, longitude } = req.body;
     const attendance = new attendanceModel({
       userId: userId,
       userName: userName,
       organizationID: organizationID,
-      checkInTime: checkInTime
+      checkInTime: checkInTime,
+      latitude: latitude,
+      longitude: longitude
     });
 
     const save = await attendance.save();
