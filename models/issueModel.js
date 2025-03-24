@@ -64,6 +64,9 @@ const issueSchema = new mongoose.Schema(
     timeEstimation: {
       type: String,
     },
+    acceptanceCriteria:{
+      type: String,
+    },
     timeTracking: [
       {
         TrackedTime: String,

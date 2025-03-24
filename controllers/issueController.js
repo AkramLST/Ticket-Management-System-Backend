@@ -320,14 +320,14 @@ router.post("/getIssueDetail", async (req, res) => {
 });
 
 router.post("/updatedescription", async (req, res) => {
-  const { issueDescription, issueName, issueid, id, userName, ProfileImage } =
+  const { issueDescription, issueName, issueid, id, userName, ProfileImage, acceptanceCriteria } =
     req.body;
   console.log("new body", req.body);
 
   try {
     const response = await issueModel.findByIdAndUpdate(
       issueid, // Use the id directly
-      { $set: { issueDescription } }, // Update the issue description
+      { $set: { issueDescription , acceptanceCriteria: acceptanceCriteria } }, // Update the issue description
       { new: true } // Return the updated document
     );
     if (response) {
@@ -356,6 +356,41 @@ router.post("/updatedescription", async (req, res) => {
       success: false,
       message: "An error occurred while updating",
       error: error.message, // Return the error message for debugging
+    });
+  }
+});
+
+router.post("/updateIssueTitle", async (req, res) => {
+  const {issueName, issueid, id, userName, ProfileImage } = req.body;
+  console.log(req.body)
+
+  try {
+    const response = await issueModel.findByIdAndUpdate(
+      issueid,
+      { $set: { issueName} },
+      { new: true }
+    );
+    if (response) {
+      await issueLogModel.create({
+        info: `${userName} updated the name(title) of issue`,
+        userName,
+        issueName,
+        projectId: id,
+        issueId: issueid,
+        ProfileImage,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Updated successfully",
+      data: response,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while updating",
+      error: error.message,
     });
   }
 });
