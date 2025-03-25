@@ -60,7 +60,7 @@ router.get("/singleissueLog", async (req, res) => {
     // Use the issueId to filter comments
     const commentsForIssue = await timeModel
       .find({ issueId: issueId })
-      .populate("userId", "Name ProfileImage"); // Specify both fields here
+      .populate("userId", "Name ProfileImage createdAt"); // Specify both fields here
 
     res.status(200).json({
       success: true,
