@@ -1,5 +1,6 @@
 import userModel from "../models/userModel.js";
 import attendanceModel from "../models/attendanceModel.js";
+import configurationModel from "../models/configurationModel.js";
 import Express, { response } from "express";
 import bcrypt, { compare } from "bcrypt";
 // import multer from "multer";
@@ -441,6 +442,20 @@ router.post("/allAttendance", async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ message: "Error fetching attendance records", error });
+  }
+});
+
+router.get("/getConfig", async (req, res) => {
+  try {
+    const config = await configurationModel.find();
+
+    if (config.length > 0) {
+      res.json({ message: "configuration fetched", data: config });
+    } else {
+      res.json({ message: "No configuration found", data:[] });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching configuration", error });
   }
 });
 
