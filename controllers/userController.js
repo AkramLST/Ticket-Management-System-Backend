@@ -27,8 +27,17 @@ import { forgotPassword } from "../modules/forgotPassword.js";
 
 router.post("/register", async (req, res) => {
   try {
-    const { username, email, password, gender, role, id, orname, image } =
-      req.body;
+    const {
+      username,
+      email,
+      password,
+      gender,
+      role,
+      id,
+      orname,
+      image,
+      subRole,
+    } = req.body;
     console.log("body", req.body);
     // ------------------------------------------
     // Required fields
@@ -124,6 +133,7 @@ router.post("/register", async (req, res) => {
       Name: cleanUsername,
       Email: cleanEmail,
       Gender: gender,
+      subRole: subRole,
       Password: hashedPassword,
       Role: role,
       OrganizationId: id,
