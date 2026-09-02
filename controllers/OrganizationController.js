@@ -44,6 +44,46 @@ router.get("/all", async (req, res) => {
     console.log(error);
   }
 });
+router.get("/:organizationId/details", async (req, res) => {
+  try {
+    const { organizationId } = req.params;
+
+    const organization = await OrgModel.findById(organizationId);
+
+    if (!organization) {
+      return res.status(404).json({
+        success: false,
+        message: "Organization not found",
+      });
+    }
+
+    const projects = await projectModel.find({
+      OrganizationId: organizationId,
+    });
+    const users = await userModel
+      .find({
+        OrganizationId: organizationId,
+      })
+      .select("-password -token -refreshToken");
+
+    res.status(200).json({
+      success: true,
+      data: {
+        organization,
+        projects,
+        users,
+      },
+    });
+  } catch (error) {
+    console.log("Error getting organization details:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to get organization details",
+      error: error.message,
+    });
+  }
+});
 router.post("/allUserProjects", async (req, res) => {
   const { id } = req.body;
   try {
