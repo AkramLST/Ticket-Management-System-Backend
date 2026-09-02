@@ -24,45 +24,139 @@ import { forgotPassword } from "../modules/forgotPassword.js";
 // const upload = multer({ storage: storage });
 
 // const JWT_SECRET = 'your-secret-key';
-router.post("/register", upload.single("image"), async (req, res) => {
-  const { username, email, password, gender, role, id, orname, image } =
-    req.body;
-  // const { file } = req;
-  const hashedPassword = await bcrypt.hash(password, 10);
+
+router.post("/register", async (req, res) => {
   try {
-    const existingUser = await userModel.findOne({ Email: email });
-    if (existingUser) {
-      return res.status(400).json({ message: "Email is already registered" });
+    const { username, email, password, gender, role, id, orname, image } =
+      req.body;
+    console.log("body", req.body);
+    // ------------------------------------------
+    // Required fields
+    // ------------------------------------------
+
+    if (!username || !email || !password || !gender || !role || !id) {
+      return res.status(400).json({
+        success: false,
+        message: "All required fields must be provided",
+      });
     }
 
-    // if (data.password.length < 4) {
-    //   return res.status(501).json({
-    //     message: "Password is too short",
-    //   });
-    // }
+    // ------------------------------------------
+    // Username validation
+    // ------------------------------------------
+
+    const cleanUsername = username.trim();
+
+    if (cleanUsername.length < 5) {
+      return res.status(400).json({
+        success: false,
+        message: "Username must be at least 5 characters long",
+      });
+    }
+
+    // ------------------------------------------
+    // Email validation
+    // ------------------------------------------
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    const emailRegex =
+      /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$/;
+
+    if (!emailRegex.test(cleanEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid email address",
+      });
+    }
+
+    // ------------------------------------------
+    // Password validation
+    // ------------------------------------------
+
+    if (password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 8 characters long",
+      });
+    }
+
+    if (!/\d/.test(password)) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must contain at least one number",
+      });
+    }
+
+    if (!/[!@#$%^&*(),.?":{}|<>_\-\\[\]/+=;'`~]/.test(password)) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must contain at least one symbol",
+      });
+    }
+
+    // ------------------------------------------
+    // Check duplicate email
+    // ------------------------------------------
+
+    const existingUser = await userModel.findOne({
+      Email: cleanEmail,
+    });
+
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: "Email is already registered",
+      });
+    }
+
+    // ------------------------------------------
+    // Hash password
+    // ------------------------------------------
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // ------------------------------------------
+    // Create user
+    // ------------------------------------------
 
     const user = new userModel({
-      Name: username,
-      Email: email,
+      Name: cleanUsername,
+      Email: cleanEmail,
       Gender: gender,
       Password: hashedPassword,
       Role: role,
       OrganizationId: id,
       OrganizationName: orname,
-      ProfileImage: image,
-      // ProfileImage: file ? file.path : undefined,
-      // profileImage: data.req.file,
+      ProfileImage: image || null,
     });
 
-    const redisteredUser = await user.save();
-    res.status(201).json({
+    const registeredUser = await user.save();
+
+    // ------------------------------------------
+    // Response
+    // ------------------------------------------
+
+    return res.status(201).json({
       success: true,
       message: "User registered successfully",
-      redisteredUser,
+      user: registeredUser,
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "server side error" });
+    console.error("Register error:", error);
+
+    // MongoDB duplicate key protection
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Email is already registered",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong on the server",
+    });
   }
 });
 
@@ -85,8 +179,7 @@ router.post("/login", async (req, res) => {
     bcrypt.compare(password, user.Password, (err, result) => {
       if (!result) {
         return res.status(401).json({ error: "password not matched" });
-      }
-      else {
+      } else {
         const token = jwt.sign({ userId: user._id }, "your-secret-key");
         res.status(200).json({
           user,
@@ -157,7 +250,10 @@ router.post("/logout", async (req, res) => {
 router.post("/all", async (req, res) => {
   const { id } = req.body;
   try {
-    const users = await userModel.find({ OrganizationId: id }, "_id Name ProfileImage");
+    const users = await userModel.find(
+      { OrganizationId: id },
+      "_id Name ProfileImage",
+    );
 
     res.status(200).json({
       success: true,
@@ -194,7 +290,10 @@ router.post("/allSelected", async (req, res) => {
   try {
     const userIds = req.body.data;
 
-    const users = await userModel.find({ _id: { $in: userIds } }, "_id Name ProfileImage"); // Use $in to filter by provided IDs
+    const users = await userModel.find(
+      { _id: { $in: userIds } },
+      "_id Name ProfileImage",
+    ); // Use $in to filter by provided IDs
 
     res.status(200).json({
       success: true,
@@ -269,18 +368,21 @@ router.post("/update", async (req, res) => {
     if (Password != "" || null) {
       updatedUser = await userModel.findByIdAndUpdate(
         _id,
-        { Name: Name, Email: Email, Password: hashedpasword, ProfileImage: image },
-        { new: true }
+        {
+          Name: Name,
+          Email: Email,
+          Password: hashedpasword,
+          ProfileImage: image,
+        },
+        { new: true },
       );
-    }
-    else {
+    } else {
       updatedUser = await userModel.findByIdAndUpdate(
         _id,
         { Name: Name, Email: Email, ProfileImage: image },
-        { new: true }
+        { new: true },
       );
     }
-
 
     res.json({
       success: true,
@@ -295,23 +397,21 @@ router.post("/update", async (req, res) => {
 router.post("/forgotPassword", async (req, res) => {
   try {
     const { email } = req.body;
-    const response = await forgotPassword(email);  // module with forgot password implementatio in node with mongoDB
-    console.log("response : ", response)
+    const response = await forgotPassword(email); // module with forgot password implementatio in node with mongoDB
+    console.log("response : ", response);
     if (response === true) {
-      console.log("returned true")
+      console.log("returned true");
       res.json({
         success: true,
         message: "Reset Password Email Sent",
       });
-    }
-    else {
+    } else {
       res.json({
         success: false,
         message: response,
       });
     }
-  }
-  catch (err) {
+  } catch (err) {
     console.error("Error updating users:", err);
     res.status(500).json({ success: false, message: "Error updating issue" });
   }
@@ -321,59 +421,69 @@ router.post("/resetPassword", async (req, res) => {
   const { id, token, newPassword } = req.body;
   const hashedPassword = await bcrypt.hash(newPassword, 10);
   try {
-
     jwt.verify(token, "your-secret-key", async (err, decode) => {
       if (err) {
-        res.status(401).json({ Status: "Token Invalid", message: "Invalid Token", error: err });
-      }
-      else {
-        const user = await userModel.findByIdAndUpdate(id, { Password: hashedPassword }, { new: true });
+        res.status(401).json({
+          Status: "Token Invalid",
+          message: "Invalid Token",
+          error: err,
+        });
+      } else {
+        const user = await userModel.findByIdAndUpdate(
+          id,
+          { Password: hashedPassword },
+          { new: true },
+        );
         if (user) {
           res.json({
             success: true,
-            message: "Password updated sucessfully!"
+            message: "Password updated sucessfully!",
           });
-        }
-        else {
+        } else {
           res.json({
             success: false,
-            message: "Failed to update password!"
+            message: "Failed to update password!",
           });
         }
       }
     });
-  }
-  catch (error) {
+  } catch (error) {
     console.error("Error updating users:", error);
-    res.status(500).json({ success: false, message: "Error updating password" });
+    res
+      .status(500)
+      .json({ success: false, message: "Error updating password" });
   }
 });
 
 router.post("/checkIn", async (req, res) => {
   try {
-    const { userId, checkInTime, userName, organizationID, latitude, longitude } = req.body;
+    const {
+      userId,
+      checkInTime,
+      userName,
+      organizationID,
+      latitude,
+      longitude,
+    } = req.body;
     const attendance = new attendanceModel({
       userId: userId,
       userName: userName,
       organizationID: organizationID,
       checkInTime: checkInTime,
       latitude: latitude,
-      longitude: longitude
+      longitude: longitude,
     });
 
     const save = await attendance.save();
     if (save) {
       console.log("Saved");
       res.json({ message: "Checked In Successfully", data: save });
-    }
-    else {
+    } else {
       res.json({ message: "Checked In Failed" });
     }
-  }
-  catch (error) {
+  } catch (error) {
     res.json({ message: "Error, Checked In Failed", error: error });
   }
-
 });
 
 router.post("/checkout", async (req, res) => {
@@ -388,7 +498,7 @@ router.post("/checkout", async (req, res) => {
     // Find the existing attendance record for the same user and date
     const attendance = await attendanceModel.findOne({
       userId: userId,
-      checkInTime: { $gte: startOfDay, $lte: endOfDay }
+      checkInTime: { $gte: startOfDay, $lte: endOfDay },
     });
 
     if (attendance) {
@@ -413,35 +523,54 @@ router.post("/checkout", async (req, res) => {
 router.post("/lastCheckIn", async (req, res) => {
   try {
     const { id } = req.body;
-    const latestAttendance = await attendanceModel.findOne({ userId: id })
+    const latestAttendance = await attendanceModel
+      .findOne({ userId: id })
       .sort({ _id: -1 })
-      .select('checkInTime checkOutTime');
+      .select("checkInTime checkOutTime");
 
     if (latestAttendance) {
-      res.json({ message: "Latest Check-In Found", checkInTime: latestAttendance.checkInTime, checkOutTime:latestAttendance.checkOutTime });
+      res.json({
+        message: "Latest Check-In Found",
+        checkInTime: latestAttendance.checkInTime,
+        checkOutTime: latestAttendance.checkOutTime,
+      });
     } else {
-      res.json({ message: "No Check-In record found for this user", checkInTime: null });
+      res.json({
+        message: "No Check-In record found for this user",
+        checkInTime: null,
+      });
     }
   } catch (error) {
-    res.status(500).json({ message: "Error fetching last check-in", error: error });
+    res
+      .status(500)
+      .json({ message: "Error fetching last check-in", error: error });
   }
 });
 
 router.post("/allAttendance", async (req, res) => {
   try {
     const { attendanceDate } = req.body;
-    const allAttendance = await attendanceModel.find(
-      {
-        createdAt: { $gte: new Date(attendanceDate), $lt: new Date(attendanceDate + "T23:59:59.999Z") }
-      }).sort({_id: -1});
+    const allAttendance = await attendanceModel
+      .find({
+        createdAt: {
+          $gte: new Date(attendanceDate),
+          $lt: new Date(attendanceDate + "T23:59:59.999Z"),
+        },
+      })
+      .sort({ _id: -1 });
 
     if (allAttendance.length > 0) {
-      res.json({ message: "All attendance records fetched", data: allAttendance });
+      res.json({
+        message: "All attendance records fetched",
+        data: allAttendance,
+      });
     } else {
-      res.json({ message: "No attendance records found", data:[] });
+      res.json({ message: "No attendance records found", data: [] });
     }
   } catch (error) {
-    res.status(500).json({ message: "Error fetching attendance records", error });
+    res
+      .status(500)
+      .json({ message: "Error fetching attendance records", error });
   }
 });
 
@@ -452,7 +581,7 @@ router.get("/getConfig", async (req, res) => {
     if (config.length > 0) {
       res.json({ message: "configuration fetched", data: config });
     } else {
-      res.json({ message: "No configuration found", data:[] });
+      res.json({ message: "No configuration found", data: [] });
     }
   } catch (error) {
     res.status(500).json({ message: "Error fetching configuration", error });

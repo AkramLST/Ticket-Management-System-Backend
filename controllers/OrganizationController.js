@@ -72,7 +72,131 @@ router.get("/single", async (req, res) => {
     console.log(error);
   }
 });
+//delete
+router.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
 
+    // ------------------------------------------
+    // Validate organization ID
+    // ------------------------------------------
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid organization ID.",
+      });
+    }
+
+    // ------------------------------------------
+    // Find Organization
+    // ------------------------------------------
+
+    const organization = await OrgModel.findById(id);
+
+    if (!organization) {
+      return res.status(404).json({
+        success: false,
+        message: "Organization not found.",
+      });
+    }
+
+    // ------------------------------------------
+    // Delete Projects
+    // ------------------------------------------
+
+    const deletedProjects = await projectModel.deleteMany({
+      OrganizationId: id,
+    });
+
+    // ------------------------------------------
+    // Delete Users
+    // ------------------------------------------
+
+    const deletedUsers = await userModel.deleteMany({
+      OrganizationId: id,
+    });
+
+    // ------------------------------------------
+    // Delete Organization
+    // ------------------------------------------
+
+    await OrgModel.findByIdAndDelete(id);
+
+    // ------------------------------------------
+    // Response
+    // ------------------------------------------
+
+    return res.status(200).json({
+      success: true,
+      message: "Organization and all related data deleted successfully.",
+      deleted: {
+        projects: deletedProjects.deletedCount,
+        users: deletedUsers.deletedCount,
+        organization: 1,
+      },
+    });
+  } catch (error) {
+    console.error("Delete organization error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete organization and related data.",
+    });
+  }
+});
+
+////edit
+router.put("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { orgname, orgdescription } = req.body;
+
+    // Validate organization name
+    if (!orgname || !orgname.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Organization name is required",
+      });
+    }
+
+    // Validate description
+    if (!orgdescription || !orgdescription.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Organization description is required",
+      });
+    }
+
+    const organization = await OrgModel.findById(id);
+
+    if (!organization) {
+      return res.status(404).json({
+        success: false,
+        message: "Organization not found",
+      });
+    }
+
+    // Update
+    organization.orgname = orgname.trim();
+    organization.orgdescription = orgdescription.trim();
+
+    const updatedOrganization = await organization.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Organization updated successfully",
+      data: updatedOrganization,
+    });
+  } catch (error) {
+    console.error("Update organization error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update organization",
+    });
+  }
+});
 // get a single project details
 
 router.post("/singleproject", async (req, res) => {
@@ -115,7 +239,7 @@ router.post("/update", async (req, res) => {
     const updatedProject = await projectModel.findByIdAndUpdate(
       _id,
       { name, description, Assignedto: AssignedTo },
-      { new: true }
+      { new: true },
     );
     const users = await userModel.find({ _id: { $in: AssignedTo } });
     for (const user of users) {
@@ -142,7 +266,7 @@ router.post("/update", async (req, res) => {
       await projectModel.findByIdAndUpdate(
         _id,
         { $pull: { Assignedto: { $in: removedUsers } } },
-        { new: true }
+        { new: true },
       );
     }
 
