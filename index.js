@@ -91,65 +91,6 @@ app.use("/notification", notificationRoutes);
 app.use("/organization", orgRoutes);
 app.use("/logs", issueLogRoute);
 app.use("/time", timeController);
-// app.post('/register',async(req,res)=>{
-
-//     const{email,name,password}=req.body;
-
-//     try {
-//         const check =await scoreM.findOne({email:email});
-//       if (check) {
-//         res.send({status:"succesfully"});
-
-//       } else {
-//         const newUser= new scoreM({
-//             role_id:"0",
-//             name:name,
-//             email:email,
-//             password:password,
-//         });
-//          await newUser.save();
-//          res.send('User registered successfully');
-//       }
-//     } catch (error) {
-//         console.error(error);
-//     res.status(500).send('Error registering user');
-//   }
-
-// });
-
-// var transporter = nodemailer.createTransport({
-//   service: 'gmail',
-//   auth: {
-//     user: 'youremail@gmail.com',
-//     pass: 'yourpassword'
-//   }
-// });
-
-// var mailOptions = {
-//   from: 'youremail@gmail.com',
-//   to: 'myfriend@yahoo.com',
-//   subject: 'Sending Email using Node.js',
-//   text: 'That was easy!'
-// };
-
-// transporter.sendMail(mailOptions, function(error, info){
-//   if (error) {
-//     console.log(error);
-//   } else {
-//     console.log('Email sent: ' + info.response);
-//   }
-// });
-// const nodemailer = require('nodemailer');
-
-// Create a transporter using the SMTP settings
-
-// const transporter = nodemailer.createTransport({
-//   service: 'your_email_service_provider',
-//   auth: {
-//     user: 'your_email',
-//     pass: 'your_password',
-//   },
-// });
 
 app.get("/test", async (req, res) => {
   res.send("running");
