@@ -232,29 +232,94 @@ router.post("/register", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const user = await userModel.findOne({ Email: email });
+    const { username, email, password } = req.body;
 
-    if (!user) {
-      console.log("user not found");
-      return res.status(401).json({ error: "user not found" });
-    } else {
-      console.log("user found");
+    // ------------------------------------------
+    // Required fields
+    // ------------------------------------------
+
+    if (!username || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Username, email and password are required",
+      });
     }
 
-    bcrypt.compare(password, user.Password, (err, result) => {
-      if (!result) {
-        return res.status(401).json({ error: "password not matched" });
-      } else {
-        const token = jwt.sign({ userId: user._id }, "your-secret-key");
-        res.status(200).json({
-          user,
-          token,
-        });
-      }
+    // ------------------------------------------
+    // Clean values
+    // ------------------------------------------
+
+    const cleanUsername = username.trim();
+    const cleanEmail = email.trim().toLowerCase();
+
+    // ------------------------------------------
+    // Find user by username AND email
+    // ------------------------------------------
+
+    const user = await userModel.findOne({
+      Name: {
+        $regex: `^${cleanUsername.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+        $options: "i",
+      },
+      Email: cleanEmail,
+    });
+
+    // ------------------------------------------
+    // User not found
+    // ------------------------------------------
+
+    if (!user) {
+      console.log("Invalid username or email");
+
+      return res.status(401).json({
+        success: false,
+        message: "Invalid username or email",
+      });
+    }
+
+    console.log("User found");
+
+    // ------------------------------------------
+    // Compare password
+    // ------------------------------------------
+
+    const passwordMatched = await bcrypt.compare(password, user.Password);
+
+    if (!passwordMatched) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password",
+      });
+    }
+
+    // ------------------------------------------
+    // Generate JWT
+    // ------------------------------------------
+
+    const token = jwt.sign(
+      {
+        userId: user._id,
+      },
+      "your-secret-key",
+    );
+
+    // ------------------------------------------
+    // Login successful
+    // ------------------------------------------
+
+    return res.status(200).json({
+      success: true,
+      message: "Login successful",
+      user,
+      token,
     });
   } catch (error) {
-    res.status(500).json({ error: "Login failed" });
+    console.error("Login error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Login failed",
+    });
   }
 });
 
