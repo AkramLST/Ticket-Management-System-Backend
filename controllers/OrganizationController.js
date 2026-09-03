@@ -15,17 +15,38 @@ const transporter = nodemailer.createTransport({
 });
 router.post("/create", async (req, res) => {
   const { orgname, orgdescription } = req.body;
-  console.log(req.body);
-  try {
-    const data = await OrgModel.create({ orgname, orgdescription });
 
-    await data.save();
+  console.log(req.body);
+
+  try {
+    // Check if organization name already exists
+    const existingOrg = await OrgModel.findOne({
+      orgname: {
+        $regex: `^${orgname.trim()}$`,
+        $options: "i",
+      },
+    });
+
+    if (existingOrg) {
+      return res.status(400).json({
+        success: false,
+        message: "Organization name already exists.",
+      });
+    }
+
+    // Create organization
+    const data = await OrgModel.create({
+      orgname: orgname.trim(),
+      orgdescription,
+    });
+
     res.status(200).json({
       success: true,
       data,
     });
   } catch (e) {
     console.log(e);
+
     res.status(500).json({
       success: false,
       error: e.message,
@@ -217,8 +238,26 @@ router.put("/:id", async (req, res) => {
       });
     }
 
-    // Update
-    organization.orgname = orgname.trim();
+    const trimmedOrgName = orgname.trim();
+
+    // Check if another organization already has this name
+    const existingOrganization = await OrgModel.findOne({
+      orgname: {
+        $regex: `^${trimmedOrgName}$`,
+        $options: "i",
+      },
+      _id: { $ne: id }, // Exclude the current organization
+    });
+
+    if (existingOrganization) {
+      return res.status(400).json({
+        success: false,
+        message: "Organization name already exists",
+      });
+    }
+
+    // Update organization
+    organization.orgname = trimmedOrgName;
     organization.orgdescription = orgdescription.trim();
 
     const updatedOrganization = await organization.save();
