@@ -38,7 +38,9 @@ router.post("/register", async (req, res) => {
       image,
       subRole,
     } = req.body;
+
     console.log("body", req.body);
+
     // ------------------------------------------
     // Required fields
     // ------------------------------------------
@@ -56,10 +58,18 @@ router.post("/register", async (req, res) => {
 
     const cleanUsername = username.trim();
 
-    if (cleanUsername.length < 5) {
+    if (cleanUsername.length < 5 || cleanUsername.length > 30) {
       return res.status(400).json({
         success: false,
-        message: "Username must be at least 5 characters long",
+        message: "Username must be between 5 and 30 characters long",
+      });
+    }
+
+    // Username must contain at least one letter
+    if (!/[a-zA-Z]/.test(cleanUsername)) {
+      return res.status(400).json({
+        success: false,
+        message: "Username must contain at least one letter",
       });
     }
 
@@ -90,6 +100,7 @@ router.post("/register", async (req, res) => {
       });
     }
 
+    // At least one number
     if (!/\d/.test(password)) {
       return res.status(400).json({
         success: false,
@@ -97,10 +108,34 @@ router.post("/register", async (req, res) => {
       });
     }
 
+    // At least one symbol
     if (!/[!@#$%^&*(),.?":{}|<>_\-\\[\]/+=;'`~]/.test(password)) {
       return res.status(400).json({
         success: false,
         message: "Password must contain at least one symbol",
+      });
+    }
+
+    // ------------------------------------------
+    // Check duplicate username
+    // ------------------------------------------
+
+    const escapedUsername = cleanUsername.replace(
+      /[.*+?^${}()|[\]\\]/g,
+      "\\$&",
+    );
+
+    const existingUsername = await userModel.findOne({
+      Name: {
+        $regex: `^${escapedUsername}$`,
+        $options: "i",
+      },
+    });
+
+    if (existingUsername) {
+      return res.status(409).json({
+        success: false,
+        message: "Username is already taken",
       });
     }
 
@@ -155,13 +190,34 @@ router.post("/register", async (req, res) => {
   } catch (error) {
     console.error("Register error:", error);
 
+    // ------------------------------------------
     // MongoDB duplicate key protection
+    // ------------------------------------------
+
     if (error.code === 11000) {
+      if (error.keyPattern?.Email) {
+        return res.status(409).json({
+          success: false,
+          message: "Email is already registered",
+        });
+      }
+
+      if (error.keyPattern?.Name) {
+        return res.status(409).json({
+          success: false,
+          message: "Username is already taken",
+        });
+      }
+
       return res.status(409).json({
         success: false,
-        message: "Email is already registered",
+        message: "Username or email already exists",
       });
     }
+
+    // ------------------------------------------
+    // Server error
+    // ------------------------------------------
 
     return res.status(500).json({
       success: false,
