@@ -494,23 +494,54 @@ router.get("/user/:userId", async (req, res) => {
 router.post("/update", async (req, res) => {
   try {
     const { _id, Name, Email, Password, image } = req.body.data;
-    const hashedpasword = await bcrypt.hash(Password, 10);
-    var updatedUser;
-    if (Password != "" || null) {
+
+    // Check if another user already has the same Name or Email
+    const existingUser = await userModel.findOne({
+      $or: [{ Name: Name }, { Email: Email }],
+      _id: { $ne: _id },
+    });
+
+    if (existingUser) {
+      if (existingUser.Name === Name) {
+        return res.status(400).json({
+          success: false,
+          message: "Username already exists",
+        });
+      }
+
+      if (existingUser.Email === Email) {
+        return res.status(400).json({
+          success: false,
+          message: "Email already exists",
+        });
+      }
+    }
+
+    let updatedUser;
+
+    // If password is provided, hash it
+    if (Password && Password.trim() !== "") {
+      const hashedPassword = await bcrypt.hash(Password, 10);
+
       updatedUser = await userModel.findByIdAndUpdate(
         _id,
         {
           Name: Name,
           Email: Email,
-          Password: hashedpasword,
+          Password: hashedPassword,
           ProfileImage: image,
         },
         { new: true },
       );
     } else {
+      // Don't change existing password
       updatedUser = await userModel.findByIdAndUpdate(
         _id,
-        { Name: Name, Email: Email, ProfileImage: image },
+        {
+          Name: Name,
+          Email: Email,
+          ProfileImage: image,
+        },
         { new: true },
       );
     }
@@ -520,8 +551,12 @@ router.post("/update", async (req, res) => {
       data: updatedUser,
     });
   } catch (error) {
-    console.error("Error updating users:", error);
-    res.status(500).json({ success: false, message: "Error updating issue" });
+    console.error("Error updating user:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Error updating user",
+    });
   }
 });
 
