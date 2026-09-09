@@ -41,10 +41,7 @@ router.post("/register", async (req, res) => {
 
     console.log("body", req.body);
 
-    // ------------------------------------------
     // Required fields
-    // ------------------------------------------
-
     if (!username || !email || !password || !gender || !role || !id) {
       return res.status(400).json({
         success: false,
@@ -52,12 +49,12 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    // ------------------------------------------
-    // Username validation
-    // ------------------------------------------
-
+    // Clean values
     const cleanUsername = username.trim();
+    const cleanEmail = email.trim().toLowerCase();
+    const organizationId = id;
 
+    // Username validation
     if (cleanUsername.length < 5 || cleanUsername.length > 30) {
       return res.status(400).json({
         success: false,
@@ -65,7 +62,6 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    // Username must contain at least one letter
     if (!/[a-zA-Z]/.test(cleanUsername)) {
       return res.status(400).json({
         success: false,
@@ -73,12 +69,7 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    // ------------------------------------------
     // Email validation
-    // ------------------------------------------
-
-    const cleanEmail = email.trim().toLowerCase();
-
     const emailRegex =
       /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$/;
 
@@ -89,10 +80,7 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    // ------------------------------------------
     // Password validation
-    // ------------------------------------------
-
     if (password.length < 8) {
       return res.status(400).json({
         success: false,
@@ -100,7 +88,6 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    // At least one number
     if (!/\d/.test(password)) {
       return res.status(400).json({
         success: false,
@@ -108,7 +95,6 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    // At least one symbol
     if (!/[!@#$%^&*(),.?":{}|<>_\-\\[\]/+=;'`~]/.test(password)) {
       return res.status(400).json({
         success: false,
@@ -116,54 +102,44 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    // ------------------------------------------
-    // Check duplicate username
-    // ------------------------------------------
-
+    // Escape username for regex
     const escapedUsername = cleanUsername.replace(
       /[.*+?^${}()|[\]\\]/g,
       "\\$&",
     );
 
+    // Check email globally
+    const existingEmail = await userModel.findOne({
+      Email: cleanEmail,
+    });
+
+    if (existingEmail) {
+      return res.status(409).json({
+        success: false,
+        message: "Email is already registered in the system",
+      });
+    }
+
+    // Check username within the same organization
     const existingUsername = await userModel.findOne({
       Name: {
         $regex: `^${escapedUsername}$`,
         $options: "i",
       },
+      OrganizationId: organizationId,
     });
 
     if (existingUsername) {
       return res.status(409).json({
         success: false,
-        message: "Username is already taken",
+        message: "Username is already taken in this organization",
       });
     }
 
-    // ------------------------------------------
-    // Check duplicate email
-    // ------------------------------------------
-
-    const existingUser = await userModel.findOne({
-      Email: cleanEmail,
-    });
-
-    if (existingUser) {
-      return res.status(409).json({
-        success: false,
-        message: "Email is already registered",
-      });
-    }
-
-    // ------------------------------------------
     // Hash password
-    // ------------------------------------------
-
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ------------------------------------------
     // Create user
-    // ------------------------------------------
-
     const user = new userModel({
       Name: cleanUsername,
       Email: cleanEmail,
@@ -171,16 +147,12 @@ router.post("/register", async (req, res) => {
       subRole: subRole,
       Password: hashedPassword,
       Role: role,
-      OrganizationId: id,
+      OrganizationId: organizationId,
       OrganizationName: orname,
       ProfileImage: image || null,
     });
 
     const registeredUser = await user.save();
-
-    // ------------------------------------------
-    // Response
-    // ------------------------------------------
 
     return res.status(201).json({
       success: true,
@@ -190,15 +162,19 @@ router.post("/register", async (req, res) => {
   } catch (error) {
     console.error("Register error:", error);
 
-    // ------------------------------------------
     // MongoDB duplicate key protection
-    // ------------------------------------------
-
     if (error.code === 11000) {
       if (error.keyPattern?.Email) {
         return res.status(409).json({
           success: false,
-          message: "Email is already registered",
+          message: "Email is already registered in the system",
+        });
+      }
+
+      if (error.keyPattern?.Name && error.keyPattern?.OrganizationId) {
+        return res.status(409).json({
+          success: false,
+          message: "Username is already taken in this organization",
         });
       }
 
@@ -215,10 +191,6 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    // ------------------------------------------
-    // Server error
-    // ------------------------------------------
-
     return res.status(500).json({
       success: false,
       message: "Something went wrong on the server",
@@ -232,70 +204,77 @@ router.post("/register", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   try {
-    const { username, email, password } = req.body;
-
+    const { usernameOrEmail, password } = req.body;
+    console.log("this is login", usernameOrEmail, password);
     // ------------------------------------------
     // Required fields
     // ------------------------------------------
-
-    if (!username || !email || !password) {
+    if (!usernameOrEmail || !password) {
       return res.status(400).json({
         success: false,
-        message: "Username, email and password are required",
+        message: "Username/email and password are required",
       });
     }
 
     // ------------------------------------------
     // Clean values
     // ------------------------------------------
+    const loginValue = usernameOrEmail.trim();
 
-    const cleanUsername = username.trim();
-    const cleanEmail = email.trim().toLowerCase();
+    if (!loginValue) {
+      return res.status(400).json({
+        success: false,
+        message: "Username/email and password are required",
+      });
+    }
 
     // ------------------------------------------
-    // Find user by username AND email
+    // Escape special regex characters
     // ------------------------------------------
+    const escapedLoginValue = loginValue.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+    // ------------------------------------------
+    // Find user by username OR email
+    // ------------------------------------------
     const user = await userModel.findOne({
-      Name: {
-        $regex: `^${cleanUsername.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
-        $options: "i",
-      },
-      Email: cleanEmail,
+      $or: [
+        {
+          Name: {
+            $regex: `^${escapedLoginValue}$`,
+            $options: "i",
+          },
+        },
+        {
+          Email: loginValue.toLowerCase(),
+        },
+      ],
     });
 
     // ------------------------------------------
     // User not found
     // ------------------------------------------
-
     if (!user) {
-      console.log("Invalid username or email");
-
       return res.status(401).json({
         success: false,
-        message: "Invalid username or email",
+        message: "Invalid username/email or password",
       });
     }
-
-    console.log("User found");
 
     // ------------------------------------------
     // Compare password
     // ------------------------------------------
-
     const passwordMatched = await bcrypt.compare(password, user.Password);
 
     if (!passwordMatched) {
       return res.status(401).json({
         success: false,
-        message: "Invalid password",
+        message: "Invalid username/email or password",
       });
     }
 
     // ------------------------------------------
     // Generate JWT
     // ------------------------------------------
-
     const token = jwt.sign(
       {
         userId: user._id,
@@ -306,7 +285,6 @@ router.post("/login", async (req, res) => {
     // ------------------------------------------
     // Login successful
     // ------------------------------------------
-
     return res.status(200).json({
       success: true,
       message: "Login successful",
@@ -322,7 +300,6 @@ router.post("/login", async (req, res) => {
     });
   }
 });
-
 router.post("/logout", async (req, res) => {
   res.cookie("token", null, {
     expires: new Date(Date.now()),
@@ -490,70 +467,172 @@ router.get("/user/:userId", async (req, res) => {
   }
 });
 
-//update user profile
 router.post("/update", async (req, res) => {
   try {
     const { _id, Name, Email, Password, image } = req.body.data;
 
-    // Check if another user already has the same Name or Email
-    const existingUser = await userModel.findOne({
-      $or: [{ Name: Name }, { Email: Email }],
+    // Required fields
+    if (!_id || !Name || !Email) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID, username and email are required",
+      });
+    }
+
+    // Clean values
+    const cleanName = Name.trim();
+    const cleanEmail = Email.trim().toLowerCase();
+
+    // Find current user
+    const currentUser = await userModel.findById(_id);
+
+    if (!currentUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const organizationId = currentUser.OrganizationId;
+
+    // Validate username
+    if (cleanName.length < 5 || cleanName.length > 30) {
+      return res.status(400).json({
+        success: false,
+        message: "Username must be between 5 and 30 characters long",
+      });
+    }
+
+    if (!/[a-zA-Z]/.test(cleanName)) {
+      return res.status(400).json({
+        success: false,
+        message: "Username must contain at least one letter",
+      });
+    }
+
+    // Validate email
+    const emailRegex =
+      /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$/;
+
+    if (!emailRegex.test(cleanEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid email address",
+      });
+    }
+
+    // Escape username for regex
+    const escapedName = cleanName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    // Check email globally
+    const existingEmail = await userModel.findOne({
+      Email: cleanEmail,
       _id: { $ne: _id },
     });
 
-    if (existingUser) {
-      if (existingUser.Name === Name) {
-        return res.status(400).json({
-          success: false,
-          message: "Username already exists",
-        });
-      }
-
-      if (existingUser.Email === Email) {
-        return res.status(400).json({
-          success: false,
-          message: "Email already exists",
-        });
-      }
+    if (existingEmail) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is already registered in the system",
+      });
     }
 
+    // Check username within the same organization
+    const existingUsername = await userModel.findOne({
+      Name: {
+        $regex: `^${escapedName}$`,
+        $options: "i",
+      },
+      OrganizationId: organizationId,
+      _id: { $ne: _id },
+    });
+
+    if (existingUsername) {
+      return res.status(400).json({
+        success: false,
+        message: "Username is already taken in this organization",
+      });
+    }
+
+    // Update user
     let updatedUser;
 
-    // If password is provided, hash it
     if (Password && Password.trim() !== "") {
       const hashedPassword = await bcrypt.hash(Password, 10);
 
       updatedUser = await userModel.findByIdAndUpdate(
         _id,
         {
-          Name: Name,
-          Email: Email,
+          Name: cleanName,
+          Email: cleanEmail,
           Password: hashedPassword,
           ProfileImage: image,
         },
-        { new: true },
+        {
+          new: true,
+          runValidators: true,
+        },
       );
     } else {
-      // Don't change existing password
       updatedUser = await userModel.findByIdAndUpdate(
         _id,
         {
-          Name: Name,
-          Email: Email,
+          Name: cleanName,
+          Email: cleanEmail,
           ProfileImage: image,
         },
-        { new: true },
+        {
+          new: true,
+          runValidators: true,
+        },
       );
     }
 
-    res.json({
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
       success: true,
+      message: "User updated successfully",
       data: updatedUser,
     });
   } catch (error) {
     console.error("Error updating user:", error);
 
-    res.status(500).json({
+    // MongoDB duplicate key protection
+    if (error.code === 11000) {
+      if (error.keyPattern?.Email) {
+        return res.status(409).json({
+          success: false,
+          message: "Email is already registered in the system",
+        });
+      }
+
+      if (error.keyPattern?.Name && error.keyPattern?.OrganizationId) {
+        return res.status(409).json({
+          success: false,
+          message: "Username is already taken in this organization",
+        });
+      }
+
+      if (error.keyPattern?.Name) {
+        return res.status(409).json({
+          success: false,
+          message: "Username is already taken",
+        });
+      }
+
+      return res.status(409).json({
+        success: false,
+        message: "Username or email already exists",
+      });
+    }
+
+    return res.status(500).json({
       success: false,
       message: "Error updating user",
     });
