@@ -14,28 +14,79 @@ const transporter = nodemailer.createTransport({
 });
 router.post("/create", async (req, res) => {
   const { name, description, assignedto, orgid } = req.body;
+
   console.log("new body", req.body);
+
   const mentionedURL = `https://lst-ticketing-system.netlify.app`;
 
   try {
-    let project = projectModel({
-      name: name,
-      description: description,
+    // ==========================================
+    // Check if project already exists
+    // in the same organization
+    // ==========================================
+
+    const existingProject = await projectModel.findOne({
+      name: name.trim(),
+      OrganizationId: orgid,
+    });
+
+    if (existingProject) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "A project with this name already exists in this organization.",
+      });
+    }
+
+    // ==========================================
+    // Create project
+    // ==========================================
+
+    const project = new projectModel({
+      name: name.trim(),
+      description,
       Assignedto: assignedto,
       OrganizationId: orgid,
     });
 
-    // Find all users with the given IDs
-    const users = await userModel.find({ _id: { $in: assignedto } });
+    // ==========================================
+    // Find assigned users
+    // ==========================================
+
+    const users = await userModel.find({
+      _id: { $in: assignedto },
+    });
+
+    // ==========================================
+    // Send email to assigned users
+    // ==========================================
 
     for (const user of users) {
       const mailOptions = {
         from: "muhammadakram00006@gmail.com",
         to: user.Email,
         subject: "Project Created and Assigned to you",
-        html: `an Admin has created a new project <b style="color: red;"> ${name} </b> with this description 
-        <p style="color: blue;">${description}</p>  and assigned it to you... 
-        please click <a href="${mentionedURL}">here</a> to see`,
+        html: `
+          <p>
+            An Admin has created a new project
+            <b style="color: red;">${name}</b>
+            and assigned it to you.
+          </p>
+
+          <p>
+            <b>Description:</b>
+          </p>
+
+          <p style="color: blue;">
+            ${description}
+          </p>
+
+          <p>
+            Please click
+            <a href="${mentionedURL}">here</a>
+            to view the project.
+          </p>
+        `,
       };
 
       transporter.sendMail(mailOptions, (error, info) => {
@@ -47,13 +98,25 @@ router.post("/create", async (req, res) => {
       });
     }
 
+    // ==========================================
+    // Save project
+    // ==========================================
+
     const data = await project.save();
-    res.status(200).json({
-      succes: true,
+
+    return res.status(200).json({
+      success: true,
+      message: "Project created successfully.",
       data,
     });
   } catch (e) {
-    console.log(e);
+    console.error("Create project error:", e);
+
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong while creating the project.",
+      error: e.message,
+    });
   }
 });
 
@@ -61,7 +124,8 @@ router.get("/all", async (req, res) => {
   try {
     const projects = await projectModel.find().sort({ _id: -1 }).populate({
       path: "Assignedto",
-      select:"-Email -Password -Assignedto -Role -OrganizationId -ProfileImage"
+      select:
+        "-Email -Password -Assignedto -Role -OrganizationId -ProfileImage",
     });
     res.status(200).json({
       succes: true,
@@ -74,7 +138,9 @@ router.get("/all", async (req, res) => {
 router.post("/allUserProjects", async (req, res) => {
   const { id } = req.body;
   try {
-    const projects = await projectModel.find({ Assignedto: id }).sort({ _id: -1 });
+    const projects = await projectModel
+      .find({ Assignedto: id })
+      .sort({ _id: -1 });
 
     if (projects) {
       res.status(200).json({
@@ -94,7 +160,8 @@ router.post("/allsuperadminProjects", async (req, res) => {
       .sort({ _id: -1 })
       .populate({
         path: "Assignedto",
-        select:"-Email -Password -Assignedto -Role -OrganizationId -ProfileImage"
+        select:
+          "-Email -Password -Assignedto -Role -OrganizationId -ProfileImage",
       });
 
     if (projects) {
@@ -163,7 +230,7 @@ router.post("/update", async (req, res) => {
     const updatedProject = await projectModel.findByIdAndUpdate(
       _id,
       { name, description, Assignedto: AssignedTo },
-      { new: true }
+      { new: true },
     );
     const users = await userModel.find({ _id: { $in: AssignedTo } });
     for (const user of users) {
@@ -190,7 +257,7 @@ router.post("/update", async (req, res) => {
       await projectModel.findByIdAndUpdate(
         _id,
         { $pull: { Assignedto: { $in: removedUsers } } },
-        { new: true }
+        { new: true },
       );
     }
 
