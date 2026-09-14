@@ -26,7 +26,10 @@ router.post("/create", async (req, res) => {
     // ==========================================
 
     const existingProject = await projectModel.findOne({
-      name: name.trim(),
+      name: {
+        $regex: `^${name.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+        $options: "i",
+      },
       OrganizationId: orgid,
     });
 
