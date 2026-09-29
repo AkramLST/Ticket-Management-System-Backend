@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { type } from "os";
 
 const orgSchema = new mongoose.Schema({
   orgname: {
@@ -6,6 +7,9 @@ const orgSchema = new mongoose.Schema({
   },
   orgdescription: {
     type: String,
+  },
+  numberOfProjects: {
+    type: Number,
   },
 });
 

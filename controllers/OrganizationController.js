@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 router.post("/create", async (req, res) => {
-  const { orgname, orgdescription } = req.body;
+  const { orgname, orgdescription, numberOfProjects } = req.body;
 
   console.log(req.body);
 
@@ -38,6 +38,7 @@ router.post("/create", async (req, res) => {
     const data = await OrgModel.create({
       orgname: orgname.trim(),
       orgdescription,
+      numberOfProjects,
     });
 
     res.status(200).json({
@@ -211,7 +212,7 @@ router.delete("/:id", async (req, res) => {
 router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { orgname, orgdescription } = req.body;
+    const { orgname, orgdescription, numberOfProjects } = req.body;
 
     // Validate organization name
     if (!orgname || !orgname.trim()) {
@@ -259,7 +260,7 @@ router.put("/:id", async (req, res) => {
     // Update organization
     organization.orgname = trimmedOrgName;
     organization.orgdescription = orgdescription.trim();
-
+    organization.numberOfProjects = numberOfProjects;
     const updatedOrganization = await organization.save();
 
     return res.status(200).json({

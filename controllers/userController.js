@@ -135,7 +135,22 @@ router.post("/register", async (req, res) => {
         message: "Username is already taken in this organization",
       });
     }
+    // Check if organization already has a superadmin
+    if (role.toLowerCase() === "superadmin") {
+      const existingSuperAdmin = await userModel.findOne({
+        OrganizationId: organizationId,
+        Role: {
+          $regex: /^superadmin$/i,
+        },
+      });
 
+      if (existingSuperAdmin) {
+        return res.status(409).json({
+          success: false,
+          message: "This organization already has a superadmin",
+        });
+      }
+    }
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -469,7 +484,8 @@ router.get("/user/:userId", async (req, res) => {
 
 router.post("/update", async (req, res) => {
   try {
-    const { _id, Name, Email, Password, image } = req.body.data;
+    const { _id, Name, Email, currentPassword, newPassword, image } =
+      req.body.data;
 
     // Required fields
     if (!_id || !Name || !Email) {
@@ -495,7 +511,10 @@ router.post("/update", async (req, res) => {
 
     const organizationId = currentUser.OrganizationId;
 
-    // Validate username
+    // ==========================================
+    // VALIDATE USERNAME
+    // ==========================================
+
     if (cleanName.length < 5 || cleanName.length > 30) {
       return res.status(400).json({
         success: false,
@@ -510,7 +529,10 @@ router.post("/update", async (req, res) => {
       });
     }
 
-    // Validate email
+    // ==========================================
+    // VALIDATE EMAIL
+    // ==========================================
+
     const emailRegex =
       /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$/;
 
@@ -521,10 +543,16 @@ router.post("/update", async (req, res) => {
       });
     }
 
-    // Escape username for regex
+    // ==========================================
+    // ESCAPE USERNAME FOR REGEX
+    // ==========================================
+
     const escapedName = cleanName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-    // Check email globally
+    // ==========================================
+    // CHECK EMAIL GLOBALLY
+    // ==========================================
+
     const existingEmail = await userModel.findOne({
       Email: cleanEmail,
       _id: { $ne: _id },
@@ -537,7 +565,10 @@ router.post("/update", async (req, res) => {
       });
     }
 
-    // Check username within the same organization
+    // ==========================================
+    // CHECK USERNAME IN SAME ORGANIZATION
+    // ==========================================
+
     const existingUsername = await userModel.findOne({
       Name: {
         $regex: `^${escapedName}$`,
@@ -554,13 +585,85 @@ router.post("/update", async (req, res) => {
       });
     }
 
-    // Update user
-    let updatedUser;
+    // ==========================================
+    // PASSWORD CHANGE
+    // ==========================================
 
-    if (Password && Password.trim() !== "") {
-      const hashedPassword = await bcrypt.hash(Password, 10);
+    const isChangingPassword = currentPassword && currentPassword.trim() !== "";
 
-      updatedUser = await userModel.findByIdAndUpdate(
+    if (isChangingPassword) {
+      // New password is required
+      if (!newPassword || newPassword.trim() === "") {
+        return res.status(400).json({
+          success: false,
+          message: "New password is required",
+        });
+      }
+
+      // Validate new password length
+      if (newPassword.length < 8) {
+        return res.status(400).json({
+          success: false,
+          message: "New password must be at least 8 characters long",
+        });
+      }
+
+      // Validate number
+      if (!/\d/.test(newPassword)) {
+        return res.status(400).json({
+          success: false,
+          message: "New password must contain at least one number",
+        });
+      }
+
+      // Validate special character
+      if (!/[!@#$%^&*(),.?":{}|<>_\-\\[\]/+=;`~']/.test(newPassword)) {
+        return res.status(400).json({
+          success: false,
+          message: "New password must contain at least one symbol",
+        });
+      }
+
+      // ==========================================
+      // COMPARE CURRENT PASSWORD
+      // ==========================================
+
+      const passwordMatches = await bcrypt.compare(
+        currentPassword,
+        currentUser.Password,
+      );
+
+      if (!passwordMatches) {
+        return res.status(401).json({
+          success: false,
+          message: "Current password is incorrect",
+        });
+      }
+
+      // Prevent using the same password
+      const samePassword = await bcrypt.compare(
+        newPassword,
+        currentUser.Password,
+      );
+
+      if (samePassword) {
+        return res.status(400).json({
+          success: false,
+          message: "New password must be different from your current password",
+        });
+      }
+
+      // ==========================================
+      // HASH NEW PASSWORD
+      // ==========================================
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // ==========================================
+      // UPDATE WITH NEW PASSWORD
+      // ==========================================
+
+      const updatedUser = await userModel.findByIdAndUpdate(
         _id,
         {
           Name: cleanName,
@@ -573,20 +676,37 @@ router.post("/update", async (req, res) => {
           runValidators: true,
         },
       );
-    } else {
-      updatedUser = await userModel.findByIdAndUpdate(
-        _id,
-        {
-          Name: cleanName,
-          Email: cleanEmail,
-          ProfileImage: image,
-        },
-        {
-          new: true,
-          runValidators: true,
-        },
-      );
+
+      if (!updatedUser) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Profile and password updated successfully",
+        data: updatedUser,
+      });
     }
+
+    // ==========================================
+    // NORMAL PROFILE UPDATE
+    // ==========================================
+
+    const updatedUser = await userModel.findByIdAndUpdate(
+      _id,
+      {
+        Name: cleanName,
+        Email: cleanEmail,
+        ProfileImage: image,
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
 
     if (!updatedUser) {
       return res.status(404).json({
