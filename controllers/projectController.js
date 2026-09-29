@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import projectModel from "../models/projectModels.js";
 import nodemailer from "nodemailer";
 import userModel from "../models/userModel.js";
+import OrgModel from "../models/organizations.js";
 
 const router = express.Router();
 const transporter = nodemailer.createTransport({
@@ -21,13 +22,69 @@ router.post("/create", async (req, res) => {
 
   try {
     // ==========================================
+    // Validate required fields
+    // ==========================================
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Project name is required.",
+      });
+    }
+
+    if (!orgid) {
+      return res.status(400).json({
+        success: false,
+        message: "Organization ID is required.",
+      });
+    }
+
+    // ==========================================
+    // Find organization
+    // ==========================================
+
+    const organization = await OrgModel.findById(orgid);
+
+    if (!organization) {
+      return res.status(404).json({
+        success: false,
+        message: "Organization not found.",
+      });
+    }
+
+    // ==========================================
+    // Check maximum project limit
+    // ==========================================
+
+    const currentProjectCount = await projectModel.countDocuments({
+      OrganizationId: orgid,
+    });
+
+    console.log("Current project count:", currentProjectCount);
+    console.log("Maximum allowed projects:", organization.numberOfProjects);
+
+    if (
+      organization.numberOfProjects !== undefined &&
+      currentProjectCount >= organization.numberOfProjects
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Project Creation limit is reached.",
+      });
+    }
+
+    // ==========================================
     // Check if project already exists
     // in the same organization
     // ==========================================
 
+    const escapedProjectName = name
+      .trim()
+      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
     const existingProject = await projectModel.findOne({
       name: {
-        $regex: `^${name.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+        $regex: `^${escapedProjectName}$`,
         $options: "i",
       },
       OrganizationId: orgid,
@@ -57,7 +114,7 @@ router.post("/create", async (req, res) => {
     // ==========================================
 
     const users = await userModel.find({
-      _id: { $in: assignedto },
+      _id: { $in: assignedto || [] },
     });
 
     // ==========================================
@@ -69,10 +126,11 @@ router.post("/create", async (req, res) => {
         from: "muhammadakram00006@gmail.com",
         to: user.Email,
         subject: "Project Created and Assigned to you",
+
         html: `
           <p>
             An Admin has created a new project
-            <b style="color: red;">${name}</b>
+            <b style="color: red;">${name.trim()}</b>
             and assigned it to you.
           </p>
 
@@ -81,7 +139,7 @@ router.post("/create", async (req, res) => {
           </p>
 
           <p style="color: blue;">
-            ${description}
+            ${description || "No description provided."}
           </p>
 
           <p>
@@ -106,6 +164,10 @@ router.post("/create", async (req, res) => {
     // ==========================================
 
     const data = await project.save();
+
+    // ==========================================
+    // Return success response
+    // ==========================================
 
     return res.status(200).json({
       success: true,
