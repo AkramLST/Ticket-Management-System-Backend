@@ -175,25 +175,54 @@ router.post("/singlepro", async (req, res) => {
 // });
 router.post("/updateAssign", async (req, res) => {
   const { issueId, Assignedto } = req.body;
-  console.log(req.body);
+
+  console.log("Update assignment request:", {
+    issueId,
+    Assignedto,
+  });
 
   try {
+    if (!issueId || !Assignedto) {
+      return res.status(400).json({
+        success: false,
+        message: "issueId and Assignedto are required",
+      });
+    }
+
     const response = await issueModel.findByIdAndUpdate(
-      issueId, // Use the issueId directly
-      { $set: { Assignedto } }, // Update the Assignedto field
-      { new: true } // Return the updated document
+      issueId,
+      {
+        $set: {
+          Assignedto: Assignedto,
+        },
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
     );
 
-    res.json({
+    if (!response) {
+      return res.status(404).json({
+        success: false,
+        message: "Issue not found",
+      });
+    }
+
+    console.log("Updated issue:", response);
+
+    return res.status(200).json({
       success: true,
       message: "Assigned user updated successfully",
       data: response,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Update assignment error:", error);
+
+    return res.status(500).json({
       success: false,
       message: "An error occurred while updating the assigned user",
-      error: error.message, // Return the error message for debugging
+      error: error.message,
     });
   }
 });
@@ -206,7 +235,7 @@ router.post("/updatePriority", async (req, res) => {
     const response = await issueModel.findByIdAndUpdate(
       issueId, // Use the issueId directly
       { $set: { priority } }, // Update the Assignedto field
-      { new: true } // Return the updated document
+      { new: true }, // Return the updated document
     );
 
     res.json({
@@ -231,7 +260,7 @@ router.post("/updateStatus", async (req, res) => {
     const response = await issueModel.findByIdAndUpdate(
       issueId, // Use the issueId directly
       { $set: { status } }, // Update the Assignedto field
-      { new: true } // Return the updated document
+      { new: true }, // Return the updated document
     );
     if (response) {
       await issueLogModel.create({
@@ -297,9 +326,8 @@ router.post("/updateimageurl", async (req, res) => {
 });
 //getIssueDetail
 router.post("/getIssueDetail", async (req, res) => {
-  const { issueid } =
-    req.body;
-
+  const { issueid } = req.body;
+  console.log("issue id is ", issueid);
   try {
     const response = await issueModel.findById(
       issueid, // Use the id directly
@@ -320,15 +348,22 @@ router.post("/getIssueDetail", async (req, res) => {
 });
 
 router.post("/updatedescription", async (req, res) => {
-  const { issueDescription, issueName, issueid, id, userName, ProfileImage, acceptanceCriteria } =
-    req.body;
+  const {
+    issueDescription,
+    issueName,
+    issueid,
+    id,
+    userName,
+    ProfileImage,
+    acceptanceCriteria,
+  } = req.body;
   console.log("new body", req.body);
 
   try {
     const response = await issueModel.findByIdAndUpdate(
       issueid, // Use the id directly
-      { $set: { issueDescription , acceptanceCriteria: acceptanceCriteria } }, // Update the issue description
-      { new: true } // Return the updated document
+      { $set: { issueDescription, acceptanceCriteria: acceptanceCriteria } }, // Update the issue description
+      { new: true }, // Return the updated document
     );
     if (response) {
       await issueLogModel.create({
@@ -361,14 +396,14 @@ router.post("/updatedescription", async (req, res) => {
 });
 
 router.post("/updateIssueTitle", async (req, res) => {
-  const {issueName, issueid, id, userName, ProfileImage } = req.body;
-  console.log(req.body)
+  const { issueName, issueid, id, userName, ProfileImage } = req.body;
+  console.log(req.body);
 
   try {
     const response = await issueModel.findByIdAndUpdate(
       issueid,
-      { $set: { issueName} },
-      { new: true }
+      { $set: { issueName } },
+      { new: true },
     );
     if (response) {
       await issueLogModel.create({
@@ -404,7 +439,7 @@ router.post("/update", async (req, res) => {
     const updatedIssue = await issueModel.findByIdAndUpdate(
       _id,
       { issueName, issueDescription, priority, status, Assignedto },
-      { new: true }
+      { new: true },
     );
 
     res.json({
@@ -499,7 +534,7 @@ router.post("/updateEstimation", async (req, res) => {
     const response = await issueModel.findByIdAndUpdate(
       issueid, // Use the id directly
       { $set: { timeEstimation } }, // Update the issue description
-      { new: true } // Return the updated document
+      { new: true }, // Return the updated document
     );
     // if (response) {
     //   await issueLogModel.create({
