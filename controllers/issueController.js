@@ -327,22 +327,33 @@ router.post("/updateimageurl", async (req, res) => {
 //getIssueDetail
 router.post("/getIssueDetail", async (req, res) => {
   const { issueid } = req.body;
-  console.log("issue id is ", issueid);
-  try {
-    const response = await issueModel.findById(
-      issueid, // Use the id directly
-    );
 
-    res.json({
+  console.log("issue id is ", issueid);
+
+  try {
+    const response = await issueModel.findById(issueid).populate("Assignedto");
+
+    if (!response) {
+      return res.status(404).json({
+        success: false,
+        message: "Issue not found",
+      });
+    }
+
+    console.log("Issue with complete Assignedto:", response);
+
+    res.status(200).json({
       success: true,
-      message: "Updated successfully",
-      data: response, // Optionally send back the updated issue
+      message: "Issue fetched successfully",
+      data: response,
     });
   } catch (error) {
+    console.error("Error fetching issue:", error);
+
     res.status(500).json({
       success: false,
-      message: "An error occurred while updating",
-      error: error.message, // Return the error message for debugging
+      message: "An error occurred while fetching issue",
+      error: error.message,
     });
   }
 });

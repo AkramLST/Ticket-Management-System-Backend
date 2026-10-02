@@ -2,85 +2,140 @@ import mongoose from "mongoose";
 
 const teamSchema = new mongoose.Schema(
   {
-    organization: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Organization",
-      required: true,
-      index: true,
-    },
+    // ========================================================
+    // TEAM NAME
+    // ========================================================
 
     name: {
       type: String,
-      required: true,
+      required: [true, "Team name is required"],
       trim: true,
+      minlength: [3, "Team name must be at least 3 characters"],
+      maxlength: [30, "Team name cannot exceed 30 characters"],
     },
+
+    // ========================================================
+    // DESCRIPTION
+    // ========================================================
 
     description: {
       type: String,
+      required: [true, "Team description is required"],
       trim: true,
-      default: "",
+      minlength: [20, "Description must be at least 20 characters"],
+      maxlength: [250, "Description cannot exceed 250 characters"],
     },
 
-    teamLead: {
+    // ========================================================
+    // ORGANIZATION
+    // ========================================================
+
+    organizationId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
+      ref: "organization",
+      required: [true, "Organization ID is required"],
     },
 
-    members: [
+    // ========================================================
+    // DEVELOPERS
+    // Minimum 1
+    // No maximum
+    // ========================================================
+
+    developerIds: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: "users",
       },
     ],
 
-    projects: [
+    // ========================================================
+    // TEAM LEAD
+    // Exactly 1
+    // ========================================================
+
+    teamLeadId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "users",
+      required: [true, "Team lead is required"],
+    },
+
+    // ========================================================
+    // PROJECT MANAGERS
+    // Minimum 1
+    // Maximum 2
+    // ========================================================
+
+    projectManagerIds: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Project",
+        ref: "users",
       },
     ],
 
-    status: {
-      type: String,
-      enum: ["active", "inactive"],
-      default: "active",
-    },
+    // ========================================================
+    // TESTERS
+    // Minimum 0
+    // No maximum
+    // ========================================================
 
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-
-    updatedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
-    },
+    testerIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "users",
+      },
+    ],
   },
   {
     timestamps: true,
   },
 );
 
-/**
- * Prevent duplicate team names inside the same organization.
- *
- * Frontend Team and frontend team should be considered
- * the same team.
- */
-teamSchema.index(
-  { organization: 1, name: 1 },
-  {
-    unique: true,
-    collation: {
-      locale: "en",
-      strength: 2,
-    },
-  },
-);
+// ============================================================
+// VALIDATION
+// ============================================================
 
-const Team = mongoose.model("Team", teamSchema);
+teamSchema.pre("validate", function (next) {
+  // ----------------------------------------------------------
+  // Developers
+  // ----------------------------------------------------------
 
-export default Team;
+  if (!this.developerIds || this.developerIds.length < 1) {
+    return next(new Error("Team must have at least 1 developer."));
+  }
+
+  // ----------------------------------------------------------
+  // Team Lead
+  // ----------------------------------------------------------
+
+  if (!this.teamLeadId) {
+    return next(new Error("Team must have exactly 1 team lead."));
+  }
+
+  // ----------------------------------------------------------
+  // Project Managers
+  // ----------------------------------------------------------
+
+  if (!this.projectManagerIds || this.projectManagerIds.length < 1) {
+    return next(new Error("Team must have at least 1 project manager."));
+  }
+
+  if (this.projectManagerIds.length > 2) {
+    return next(new Error("Team cannot have more than 2 project managers."));
+  }
+
+  // ----------------------------------------------------------
+  // Testers
+  // ----------------------------------------------------------
+  // 0 or unlimited testers are allowed.
+
+  next();
+});
+
+// ============================================================
+// MODEL
+// ============================================================
+
+const teamModel = mongoose.model("teams", teamSchema);
+
+export default teamModel;
