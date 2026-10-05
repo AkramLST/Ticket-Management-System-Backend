@@ -753,4 +753,75 @@ router.delete("/deleteTeam/:id", async (req, res) => {
     });
   }
 });
+router.post("/getTeamsByOrganization", async (req, res) => {
+  try {
+    const { organizationId } = req.body;
+
+    console.log("========================================");
+    console.log("GET TEAMS BY ORGANIZATION");
+    console.log("Organization ID:", organizationId);
+    console.log("========================================");
+
+    // --------------------------------------------------
+    // Validate Organization ID
+    // --------------------------------------------------
+
+    if (!organizationId) {
+      return res.status(400).json({
+        success: false,
+        message: "Organization ID is required.",
+      });
+    }
+
+    // if (!mongoose.Types.ObjectId.isValid(organizationId)) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Invalid organization ID.",
+    //   });
+    // }
+
+    // --------------------------------------------------
+    // Find all teams belonging to organization
+    // --------------------------------------------------
+
+    const teams = await teamModel
+      .find({
+        organizationId: organizationId,
+      })
+      .lean();
+
+    // --------------------------------------------------
+    // No teams found
+    // --------------------------------------------------
+
+    if (!teams || teams.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: "No teams found for this organization.",
+        data: [],
+      });
+    }
+
+    // --------------------------------------------------
+    // Response
+    // --------------------------------------------------
+
+    return res.status(200).json({
+      success: true,
+      message: "Teams fetched successfully.",
+      count: teams.length,
+      data: teams,
+    });
+  } catch (error) {
+    console.error("========================================");
+    console.error("GET TEAMS BY ORGANIZATION ERROR");
+    console.error(error);
+    console.error("========================================");
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Unable to fetch teams.",
+    });
+  }
+});
 export default router;
