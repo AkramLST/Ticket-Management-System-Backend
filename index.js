@@ -22,6 +22,7 @@ import notificationRoutes from "./controllers/notificationController.js";
 import orgRoutes from "./controllers/OrganizationController.js";
 import issueLogRoute from "./controllers/issueLogController.js";
 import timeController from "./controllers/timeController.js";
+import teamController from "./controllers/teamController.js";
 // import 'bootstrap/dist/css/bootstrap.css'
 import session from "express-session";
 // import mongoStore from 'connect-mongo';
@@ -91,7 +92,7 @@ app.use("/notification", notificationRoutes);
 app.use("/organization", orgRoutes);
 app.use("/logs", issueLogRoute);
 app.use("/time", timeController);
-
+app.use("/team", teamController);
 app.get("/test", async (req, res) => {
   res.send("running");
   console.log("running");

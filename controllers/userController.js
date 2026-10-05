@@ -373,10 +373,7 @@ router.post("/logout", async (req, res) => {
 router.post("/all", async (req, res) => {
   const { id } = req.body;
   try {
-    const users = await userModel.find(
-      { OrganizationId: id },
-      "_id Name ProfileImage",
-    );
+    const users = await userModel.find({ OrganizationId: id });
 
     res.status(200).json({
       success: true,
