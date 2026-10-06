@@ -18,6 +18,15 @@ const userSchema = new mongoose.Schema({
     // minLength: [8, "password can not be short than 8 chracters"],
     // select: false,
   },
+  resetPasswordToken: {
+    type: String,
+    default: null,
+  },
+
+  resetPasswordExpire: {
+    type: Date,
+    default: null,
+  },
   Assignedto: [
     {
       type: mongoose.Schema.Types.ObjectId,

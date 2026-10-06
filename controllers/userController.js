@@ -3,11 +3,12 @@ import attendanceModel from "../models/attendanceModel.js";
 import configurationModel from "../models/configurationModel.js";
 import Express, { response } from "express";
 import bcrypt, { compare } from "bcrypt";
+import crypto from "crypto";
 // import multer from "multer";
 const router = Express.Router();
 import jwt from "jsonwebtoken";
 import upload from "../multer.js";
-import { passwordReset } from "../helper/mailer.js";
+import transporter, { passwordReset } from "../helper/mailer.js";
 import { forgotPassword } from "../modules/forgotPassword.js";
 
 // ... rest of your code
@@ -756,64 +757,287 @@ router.post("/update", async (req, res) => {
   }
 });
 
-router.post("/forgotPassword", async (req, res) => {
+router.post("/forgot-password", async (req, res) => {
   try {
-    const { email } = req.body;
-    const response = await forgotPassword(email); // module with forgot password implementatio in node with mongoDB
-    console.log("response : ", response);
-    if (response === true) {
-      console.log("returned true");
-      res.json({
-        success: true,
-        message: "Reset Password Email Sent",
-      });
-    } else {
-      res.json({
+    const email = req.body.email?.trim().toLowerCase();
+
+    if (!email) {
+      return res.status(400).json({
         success: false,
-        message: response,
+        message: "Email address is required.",
       });
     }
-  } catch (err) {
-    console.error("Error updating users:", err);
-    res.status(500).json({ success: false, message: "Error updating issue" });
+
+    const user = await userModel.findOne({
+      Email: email,
+    });
+
+    /*
+      Security:
+      Don't reveal whether an email exists in the database.
+    */
+    if (!user) {
+      return res.status(200).json({
+        success: true,
+        message:
+          "If an account exists with this email, a password reset link has been sent.",
+      });
+    }
+
+    // Generate random token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    // Store only hashed token in database
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    user.resetPasswordToken = hashedToken;
+
+    // Token valid for 30 minutes
+    user.resetPasswordExpire = new Date(Date.now() + 30 * 60 * 1000);
+
+    await user.save();
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
+    const mailHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8" />
+        <title>Password Reset</title>
+      </head>
+
+      <body style="
+        margin:0;
+        padding:0;
+        background:#f1f5f9;
+        font-family:Arial,Helvetica,sans-serif;
+      ">
+
+        <div style="
+          max-width:600px;
+          margin:40px auto;
+          background:#ffffff;
+          border-radius:20px;
+          overflow:hidden;
+          box-shadow:0 10px 40px rgba(15,23,42,0.08);
+        ">
+
+          <div style="
+            background:linear-gradient(135deg,#2563eb,#4f46e5);
+            padding:40px 30px;
+            text-align:center;
+            color:white;
+          ">
+
+            <div style="
+              width:60px;
+              height:60px;
+              background:rgba(255,255,255,0.15);
+              border-radius:16px;
+              margin:0 auto 20px;
+              line-height:60px;
+              font-size:24px;
+            ">
+              🔐
+            </div>
+
+            <h1 style="
+              margin:0;
+              font-size:26px;
+            ">
+              Password Reset Request
+            </h1>
+
+          </div>
+
+          <div style="
+            padding:40px 30px;
+            color:#334155;
+          ">
+
+            <p style="font-size:16px;">
+              Hello ${user.Name || "there"},
+            </p>
+
+            <p style="
+              font-size:15px;
+              line-height:1.7;
+              color:#64748b;
+            ">
+              We received a request to reset the password for your account.
+              Click the button below to create a new password.
+            </p>
+
+            <div style="text-align:center;margin:35px 0;">
+
+              <a
+                href="${resetUrl}"
+                style="
+                  display:inline-block;
+                  padding:15px 28px;
+                  background:#2563eb;
+                  color:#ffffff;
+                  text-decoration:none;
+                  border-radius:10px;
+                  font-weight:bold;
+                  font-size:14px;
+                "
+              >
+                Reset My Password
+              </a>
+
+            </div>
+
+            <p style="
+              font-size:13px;
+              line-height:1.6;
+              color:#94a3b8;
+            ">
+              This link will expire in 30 minutes.
+            </p>
+
+            <p style="
+              font-size:13px;
+              line-height:1.6;
+              color:#94a3b8;
+            ">
+              If you didn't request a password reset, you can safely ignore
+              this email. Your password will remain unchanged.
+            </p>
+
+          </div>
+
+          <div style="
+            padding:20px 30px;
+            background:#f8fafc;
+            text-align:center;
+            color:#94a3b8;
+            font-size:12px;
+          ">
+            This is an automated security email.
+          </div>
+
+        </div>
+
+      </body>
+      </html>
+    `;
+
+    await transporter.sendMail({
+      from: process.env.MAIL_FROM || process.env.MAIL_USER,
+      to: user.Email,
+      subject: "Reset Your Password",
+      html: mailHtml,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "If an account exists with this email, a password reset link has been sent.",
+    });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to process your password reset request.",
+    });
   }
 });
 
-router.post("/resetPassword", async (req, res) => {
-  const { id, token, newPassword } = req.body;
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
+router.post("/reset-password/:token", async (req, res) => {
   try {
-    jwt.verify(token, "your-secret-key", async (err, decode) => {
-      if (err) {
-        res.status(401).json({
-          Status: "Token Invalid",
-          message: "Invalid Token",
-          error: err,
-        });
-      } else {
-        const user = await userModel.findByIdAndUpdate(
-          id,
-          { Password: hashedPassword },
-          { new: true },
-        );
-        if (user) {
-          res.json({
-            success: true,
-            message: "Password updated sucessfully!",
-          });
-        } else {
-          res.json({
-            success: false,
-            message: "Failed to update password!",
-          });
-        }
-      }
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: "Password reset token is required.",
+      });
+    }
+
+    if (!password) {
+      return res.status(400).json({
+        success: false,
+        message: "New password is required.",
+      });
+    }
+
+    // Server-side password validation
+    if (password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 8 characters.",
+      });
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must contain at least one uppercase letter.",
+      });
+    }
+
+    if (!/[a-z]/.test(password)) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must contain at least one lowercase letter.",
+      });
+    }
+
+    if (!/\d/.test(password)) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must contain at least one number.",
+      });
+    }
+
+    // Hash token from URL
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    // Find valid token
+    const user = await userModel.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpire: {
+        $gt: new Date(),
+      },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Password reset link is invalid or has expired.",
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    user.Password = hashedPassword;
+
+    // Invalidate reset token
+    user.resetPasswordToken = null;
+    user.resetPasswordExpire = null;
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Password reset successfully. You can now login with your new password.",
     });
   } catch (error) {
-    console.error("Error updating users:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Error updating password" });
+    console.error("Reset password error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to reset password. Please try again.",
+    });
   }
 });
 
