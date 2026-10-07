@@ -787,7 +787,6 @@ router.post("/forgot-password", async (req, res) => {
     // Generate random token
     const resetToken = crypto.randomBytes(32).toString("hex");
 
-    // Store only hashed token in database
     const hashedToken = crypto
       .createHash("sha256")
       .update(resetToken)
@@ -800,7 +799,7 @@ router.post("/forgot-password", async (req, res) => {
 
     await user.save();
 
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+    const resetUrl = `${process.env.FRONTEND_URL}reset-password/${resetToken}`;
 
     const mailHtml = `
       <!DOCTYPE html>
