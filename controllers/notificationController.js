@@ -1,118 +1,17 @@
 import express from "express";
 import mongoose from "mongoose";
 import notificationModel from "../models/notificationModel.js";
-const router = express.Router();
-// import { UserMentionMailer } from "../helper/mailer.js";
 import userModel from "../models/userModel.js";
 import nodemailer from "nodemailer";
 import commentModel from "../models/commentModel.js";
-// const createMentionNotifications = async (comment, mentionedUserIds) => {
-//     try {
-//       const notifications = mentionedUserIds.map((userId) => {
-//         return {
-//           sender: comment.userId,
-//           receiver: userId,
-//           commentId: comment._id,
-//           message: `${comment.userId.Name} mentioned you in a comment.`,
-//         };
-//       });
 
-//       await notificationModel.insertMany(notifications);
-//     } catch (error) {
-//       console.error("Error creating mention notifications:", error);
-//     }
-//   };
-
-//   const getUnreadNotifications = async (userId) => {
-//     try {
-//       const unreadNotifications = await notificationModel
-//         .find({ receiver: userId, read: false })
-//         .populate("commentId", "comment");
-
-//       return unreadNotifications;
-//     } catch (error) {
-//       console.error("Error fetching unread notifications:", error);
-//       return [];
-//     }
-//   };
-
-router.post("/create", async (req, res) => {
-  try {
-    const { senderId, receiverId, commentId, issueId, message } = req.body;
-    console.log(req.body);
-    const notification = new notificationModel({
-      senderId: senderId,
-      receiverId: receiverId,
-      commentId: commentId,
-      IssueId: issueId,
-      message: message,
-    });
-
-    const savedNotification = await notification.save();
-    // io.to(receiverId).emit("mention_notification", { message });
-    // res.status(201).json({
-    //   success: true,
-    //   data: savedNotification,
-    // });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
-
-router.post("/all", async (req, res) => {
-  try {
-    const { receiverId } = req.body;
-    // console.log(receiverId,"this is new");
-
-    const notifications = await notificationModel.find({
-      receiverId: receiverId,
-    });
-    // .sort({ timestamp: -1 });
-    res.json({ success: true, data: notifications });
-  } catch (error) {
-    console.error("Error fetching notifications:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
-});
-
-router.post("/single/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    console.log(req.params);
-    await notificationModel.findByIdAndUpdate(id, { read: true });
-    res.status(200).json({
-      success: true,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to mark notification as read.",
-    });
-  }
-});
-
-// router.get('/all', async (req, res) => {
-//     try {
-//       const userId = req.query.userId;
-//       const notifications = await notificationModel.find({ receiverId: userId })
-//       // .sort({ timestamp: -1 });
-//       res.json({ success: true, data: notifications });
-//     } catch (error) {
-//       console.error('Error fetching notifications:', error);
-//       res.status(500).json({ success: false, message: 'Internal server error' });
-//     }
-//   });
-//   export { createMentionNotifications, getUnreadNotifications };
-
-// const nodemailer = require('nodemailer');
+const router = express.Router();
 
 const transporter = nodemailer.createTransport({
-  service: "Gmail", // Use your email service provider
+  service: "Gmail",
   auth: {
-    user: "muhammadakram00006@gmail.com", // Replace with your email address
-    pass: "gmji hbtk ehca jveq", // Replace with your email password
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD,
   },
 });
 
@@ -120,49 +19,177 @@ router.post("/create", async (req, res) => {
   try {
     const { senderId, receiverId, commentId, comment, issueId, message } =
       req.body;
-    const mentionedURL = `https://lst-ticketing-system.netlify.app/issue/${issueId}`;
+
+    if (!receiverId) {
+      return res.status(400).json({
+        success: false,
+        message: "Receiver ID is required.",
+      });
+    }
+
+    if (!issueId) {
+      return res.status(400).json({
+        success: false,
+        message: "Issue ID is required.",
+      });
+    }
+
+    if (!message) {
+      return res.status(400).json({
+        success: false,
+        message: "Notification message is required.",
+      });
+    }
 
     const notification = new notificationModel({
-      senderId: senderId,
-      receiverId: receiverId,
-      commentId: commentId,
-      comment: comment,
+      senderId,
+      receiverId,
+      commentId,
+      comment,
       IssueId: issueId,
-      message: message,
+      message,
+      read: false,
     });
 
     const savedNotification = await notification.save();
 
-    // Find the comment to get comment details
-    const UserInfo = await commentModel.findById(commentId);
-
-    // Send an HTML email to the mentioned user
     const mentionedUser = await userModel.findById(receiverId);
 
-    if (mentionedUser) {
+    if (mentionedUser?.Email) {
+      const mentionedURL = `https://lst-ticketing-system.netlify.app/issue/${issueId}`;
+
+      let commentInfo = null;
+
+      if (commentId && mongoose.Types.ObjectId.isValid(commentId)) {
+        commentInfo = await commentModel.findById(commentId);
+      }
+
+      const emailComment = commentInfo?.comment || comment || message;
+
       const mailOptions = {
-        from: "muhammadakram00006@gmail.com",
+        from: process.env.EMAIL_USER,
         to: mentionedUser.Email,
         subject: "You have been mentioned in a comment",
-        html: `${UserInfo.comment}. Click <a href="${mentionedURL}">here</a> to view it`,
+        html: `
+          <p>${emailComment}</p>
+
+          <p>
+            Click
+            <a href="${mentionedURL}">
+              here
+            </a>
+            to view the issue.
+          </p>
+        `,
       };
 
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-          console.error("Error sending email:", error);
+          console.error("Error sending notification email:", error);
         } else {
-          console.log("Email sent:", info.response);
+          console.log("Notification email sent:", info.response);
         }
       });
     }
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
+      message: "Notification created successfully.",
       data: savedNotification,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("CREATE NOTIFICATION ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal server error",
+    });
+  }
+});
+
+router.post("/all", async (req, res) => {
+  try {
+    const { receiverId } = req.body;
+
+    if (!receiverId) {
+      return res.status(400).json({
+        success: false,
+        message: "Receiver ID is required.",
+      });
+    }
+
+    const notifications = await notificationModel
+      .find({
+        receiverId,
+      })
+      .sort({
+        timestamp: -1,
+      })
+      .lean();
+
+    const unreadCount = notifications.filter(
+      (notification) => notification.read === false,
+    ).length;
+
+    return res.status(200).json({
+      success: true,
+      count: notifications.length,
+      unreadCount,
+      data: notifications,
+    });
+  } catch (error) {
+    console.error("GET NOTIFICATIONS ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+});
+
+router.post("/single/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid notification ID.",
+      });
+    }
+
+    const notification = await notificationModel.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          read: true,
+        },
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    if (!notification) {
+      return res.status(404).json({
+        success: false,
+        message: "Notification not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Notification marked as read.",
+      data: notification,
+    });
+  } catch (error) {
+    console.error("MARK NOTIFICATION READ ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to mark notification as read.",
+    });
   }
 });
 

@@ -788,7 +788,14 @@ router.post("/getTeamsByOrganization", async (req, res) => {
       .find({
         organizationId: organizationId,
       })
-      .lean();
+      .populate("developerIds")
+      .populate("teamLeadId")
+      .populate("projectManagerIds")
+      .populate("testerIds")
+      .populate("organizationId")
+      .sort({
+        createdAt: -1,
+      });
 
     // --------------------------------------------------
     // No teams found

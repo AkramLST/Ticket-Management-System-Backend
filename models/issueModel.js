@@ -16,12 +16,15 @@ const issueSchema = new mongoose.Schema(
     },
     priority: {
       type: String,
-      default:"low"
+      default: "low",
       //required:true
     },
     startDate: {
       type: Date,
       //required:true
+    },
+    issueDate: {
+      type: Date,
     },
     Assignedto: {
       type: mongoose.Schema.Types.ObjectId,
@@ -64,7 +67,7 @@ const issueSchema = new mongoose.Schema(
     timeEstimation: {
       type: String,
     },
-    acceptanceCriteria:{
+    acceptanceCriteria: {
       type: String,
     },
     timeTracking: [
@@ -83,7 +86,7 @@ const issueSchema = new mongoose.Schema(
     },
     images: [],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 const issueModel = mongoose.model("issue", issueSchema);
 export default issueModel;
