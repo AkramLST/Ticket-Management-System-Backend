@@ -1,5 +1,5 @@
 import issueModel from "../models/issueModel.js";
-
+import mongoose from "mongoose";
 import Express from "express";
 import nodemailer from "nodemailer";
 import userModel from "../models/userModel.js";
@@ -174,18 +174,34 @@ router.post("/singlepro", async (req, res) => {
 //   }
 // });
 router.post("/updateAssign", async (req, res) => {
-  const { issueId, Assignedto } = req.body;
-
-  console.log("Update assignment request:", {
-    issueId,
-    Assignedto,
-  });
-
   try {
-    if (!issueId || !Assignedto) {
+    const { issueId, Assignedto } = req.body;
+
+    if (!issueId || !mongoose.Types.ObjectId.isValid(issueId)) {
       return res.status(400).json({
         success: false,
-        message: "issueId and Assignedto are required",
+        message: "A valid issueId is required.",
+      });
+    }
+
+    if (!Array.isArray(Assignedto)) {
+      return res.status(400).json({
+        success: false,
+        message: "Assignedto must be an array of user IDs.",
+      });
+    }
+
+    // Validate IDs and remove duplicates.
+    const assignedUserIds = [...new Set(Assignedto.map((id) => String(id)))];
+
+    const invalidId = assignedUserIds.some(
+      (id) => !mongoose.Types.ObjectId.isValid(id),
+    );
+
+    if (invalidId) {
+      return res.status(400).json({
+        success: false,
+        message: "One or more assigned user IDs are invalid.",
       });
     }
 
@@ -193,7 +209,7 @@ router.post("/updateAssign", async (req, res) => {
       issueId,
       {
         $set: {
-          Assignedto: Assignedto,
+          Assignedto: assignedUserIds,
         },
       },
       {
@@ -205,15 +221,13 @@ router.post("/updateAssign", async (req, res) => {
     if (!response) {
       return res.status(404).json({
         success: false,
-        message: "Issue not found",
+        message: "Issue not found.",
       });
     }
 
-    console.log("Updated issue:", response);
-
     return res.status(200).json({
       success: true,
-      message: "Assigned user updated successfully",
+      message: "Assignees updated successfully.",
       data: response,
     });
   } catch (error) {
@@ -221,7 +235,7 @@ router.post("/updateAssign", async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: "An error occurred while updating the assigned user",
+      message: "Failed to update assignees.",
       error: error.message,
     });
   }

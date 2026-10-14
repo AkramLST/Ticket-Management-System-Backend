@@ -26,10 +26,15 @@ const issueSchema = new mongoose.Schema(
     issueDate: {
       type: Date,
     },
+
     Assignedto: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "users",
-      default: null, // Default value is null
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "users",
+        },
+      ],
+      default: [],
     },
 
     completionDate: {
