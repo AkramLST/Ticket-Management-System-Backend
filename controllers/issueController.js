@@ -251,6 +251,110 @@ router.post("/updatePriority", async (req, res) => {
     });
   }
 });
+// Add this endpoint to your existing issue routes file.
+
+router.post("/updateTestStatus", async (req, res) => {
+  try {
+    const { issueId, issueName, testStatus, verified, userName, id } = req.body;
+
+    // 1. Validate required fields
+    if (!issueId) {
+      return res.status(400).json({
+        success: false,
+        message: "Issue ID is required.",
+      });
+    }
+
+    const validTestStatuses = ["pending", "In Progress", "Closed"];
+
+    if (testStatus !== undefined && !validTestStatuses.includes(testStatus)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid testing status. Allowed values: pending, In Progress, Closed.",
+      });
+    }
+
+    if (verified !== undefined && typeof verified !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "Verified must be a boolean value.",
+      });
+    }
+
+    // 2. Find the issue
+    const issue = await issueModel.findById(issueId);
+
+    if (!issue) {
+      return res.status(404).json({
+        success: false,
+        message: "Issue not found.",
+      });
+    }
+
+    // 3. Development must be Closed before testing can be updated
+    if (issue.status !== "Closed") {
+      return res.status(400).json({
+        success: false,
+        message:
+          "The issue must be Closed in development before its testing status can be updated.",
+      });
+    }
+
+    // 4. Do not allow changes to an already verified issue
+    if (issue.verified === true) {
+      return res.status(400).json({
+        success: false,
+        message: "This issue has already been verified.",
+      });
+    }
+
+    // 5. Verify only when both development and testing are Closed
+    if (verified === true) {
+      const finalTestStatus =
+        testStatus !== undefined ? testStatus : issue.testStatus;
+
+      if (finalTestStatus !== "Closed") {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Testing status must be Closed before the issue can be verified.",
+        });
+      }
+
+      issue.testStatus = "Closed";
+      issue.verified = true;
+    } else {
+      // 6. Update testing status
+      if (testStatus !== undefined) {
+        issue.testStatus = testStatus;
+      }
+
+      // Keep the issue unverified until a team lead verifies it
+      if (issue.verified === undefined || issue.verified === null) {
+        issue.verified = false;
+      }
+    }
+
+    await issue.save();
+
+    return res.status(200).json({
+      success: true,
+      message: verified
+        ? "Issue verified successfully."
+        : "Testing status updated successfully.",
+      issue,
+    });
+  } catch (error) {
+    console.error("Error updating testing status:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while updating testing status.",
+      error: error.message,
+    });
+  }
+});
 router.post("/updateStatus", async (req, res) => {
   const { issueId, issueName, status, userName, id, ProfileImage } = req.body;
   console.log(req.body);

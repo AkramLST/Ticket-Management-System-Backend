@@ -44,10 +44,17 @@ const issueSchema = new mongoose.Schema(
       type: String,
       default: "pending",
     },
-    // userId:{
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: "users"
-    // },
+    testStatus: {
+      type: String,
+      enum: ["pending", "In Progress", "Closed"],
+      default: "pending",
+    },
+
+    // Team Lead verification
+    verified: {
+      type: Boolean,
+      default: false,
+    },
     projectId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "projects",
