@@ -92,19 +92,64 @@ router.get("/allIssues", async (req, res) => {
 });
 
 router.post("/all", async (req, res) => {
-  // const { page, pageSize } = req.query;
-  // const skip = (page - 1) * pageSize;
   try {
-    const { id } = req.body;
-    const getAllIssues = await issueModel
-      .find({ projectId: id })
-      .populate("Assignedto");
-    res.status(200).json({
-      succes: true,
+    const { id, role, subRole, userId } = req.body;
+
+    // Validate project ID
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "A valid project ID is required.",
+      });
+    }
+
+    // Build the base query
+    const query = {
+      projectId: id,
+    };
+
+    // Superadmin, project manager, and team lead
+    // can see all issues in the selected project.
+    if (
+      role === "superadmin" ||
+      (role === "user" && ["project_manager", "team_lead"].includes(subRole))
+    ) {
+      // No additional filter required.
+    }
+
+    // Developers and testers can see only their assigned issues.
+    else if (role === "user" && ["developer", "tester"].includes(subRole)) {
+      if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({
+          success: false,
+          message: "A valid user ID is required.",
+        });
+      }
+
+      query.Assignedto = userId;
+    }
+
+    // Deny unsupported role/subRole combinations.
+    else {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to view these issues.",
+      });
+    }
+
+    const getAllIssues = await issueModel.find(query).populate("Assignedto");
+
+    return res.status(200).json({
+      success: true,
       data: getAllIssues,
     });
   } catch (error) {
-    console.log(error);
+    console.error("Error fetching issues:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch issues.",
+    });
   }
 });
 
