@@ -266,12 +266,19 @@ router.post("/updatePriority", async (req, res) => {
   }
 });
 // Add this endpoint to your existing issue routes file.
-
 router.post("/updateTestStatus", async (req, res) => {
   try {
-    const { issueId, issueName, testStatus, verified, userName, id } = req.body;
+    const {
+      issueId,
+      issueName,
+      testStatus,
+      verified,
+      sendBackToDevelopment,
+      userName,
+      ProfileImage,
+      id,
+    } = req.body;
 
-    // 1. Validate required fields
     if (!issueId) {
       return res.status(400).json({
         success: false,
@@ -284,8 +291,7 @@ router.post("/updateTestStatus", async (req, res) => {
     if (testStatus !== undefined && !validTestStatuses.includes(testStatus)) {
       return res.status(400).json({
         success: false,
-        message:
-          "Invalid testing status. Allowed values: pending, In Progress, Closed.",
+        message: "Invalid testing status.",
       });
     }
 
@@ -296,7 +302,16 @@ router.post("/updateTestStatus", async (req, res) => {
       });
     }
 
-    // 2. Find the issue
+    if (
+      sendBackToDevelopment !== undefined &&
+      typeof sendBackToDevelopment !== "boolean"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "sendBackToDevelopment must be a boolean.",
+      });
+    }
+
     const issue = await issueModel.findById(issueId);
 
     if (!issue) {
@@ -306,58 +321,123 @@ router.post("/updateTestStatus", async (req, res) => {
       });
     }
 
-    // 3. Development must be Closed before testing can be updated
-    if (issue.status !== "Closed") {
-      return res.status(400).json({
-        success: false,
-        message:
-          "The issue must be Closed in development before its testing status can be updated.",
-      });
-    }
-
-    // 4. Do not allow changes to an already verified issue
     if (issue.verified === true) {
       return res.status(400).json({
         success: false,
-        message: "This issue has already been verified.",
+        message: "A verified issue cannot be changed.",
       });
     }
 
-    // 5. Verify only when both development and testing are Closed
+    // SEND ISSUE BACK TO DEVELOPMENT
+    if (sendBackToDevelopment === true) {
+      if (issue.status !== "Closed") {
+        return res.status(400).json({
+          success: false,
+          message: "Only an issue currently in testing can be sent back.",
+        });
+      }
+
+      if (verified === true) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "An issue cannot be sent back and verified in the same operation.",
+        });
+      }
+
+      const previousTestStatus = issue.testStatus || "pending";
+
+      issue.status = "pending";
+      issue.testStatus = "pending";
+      issue.previouslyRejected = true;
+
+      await issue.save();
+
+      await issueLogModel.create({
+        info: `${userName || "Tester"} sent issue "${issueName || issue.issueName}" back to development Pending from testing ${previousTestStatus}.`,
+        userName,
+        issueName: issueName || issue.issueName,
+        ProfileImage,
+        projectId: id,
+        issueId: issue._id,
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Issue sent back to development Pending successfully.",
+        data: issue,
+      });
+    }
+
+    // TESTING STATUS AND VERIFICATION REQUIRE DEVELOPMENT CLOSED
+    if (issue.status !== "Closed") {
+      return res.status(400).json({
+        success: false,
+        message: "Development must be Closed before testing can be updated.",
+      });
+    }
+
     if (verified === true) {
       const finalTestStatus =
-        testStatus !== undefined ? testStatus : issue.testStatus;
+        testStatus !== undefined ? testStatus : issue.testStatus || "pending";
 
       if (finalTestStatus !== "Closed") {
         return res.status(400).json({
           success: false,
-          message:
-            "Testing status must be Closed before the issue can be verified.",
+          message: "Testing must be Closed before verification.",
         });
       }
 
       issue.testStatus = "Closed";
       issue.verified = true;
-    } else {
-      // 6. Update testing status
-      if (testStatus !== undefined) {
-        issue.testStatus = testStatus;
-      }
 
-      // Keep the issue unverified until a team lead verifies it
-      if (issue.verified === undefined || issue.verified === null) {
-        issue.verified = false;
-      }
+      await issue.save();
+
+      await issueLogModel.create({
+        info: `${userName || "Team Lead"} verified issue "${issueName || issue.issueName}".`,
+        userName,
+        issueName: issueName || issue.issueName,
+        ProfileImage,
+        projectId: id,
+        issueId: issue._id,
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Issue verified successfully.",
+        data: issue,
+      });
     }
 
-    await issue.save();
+    if (testStatus !== undefined) {
+      const previousTestStatus = issue.testStatus || "pending";
+
+      issue.testStatus = testStatus;
+
+      if (previousTestStatus !== testStatus) {
+        await issue.save();
+
+        await issueLogModel.create({
+          info: `${userName || "User"} changed testing status of issue "${issueName || issue.issueName}" from ${previousTestStatus} to ${testStatus}.`,
+          userName,
+          issueName: issueName || issue.issueName,
+          ProfileImage,
+          projectId: id,
+          issueId: issue._id,
+        });
+      } else if (issue.verified == null) {
+        issue.verified = false;
+        await issue.save();
+      }
+    } else if (issue.verified == null) {
+      issue.verified = false;
+      await issue.save();
+    }
 
     return res.status(200).json({
       success: true,
-      message: verified
-        ? "Issue verified successfully."
-        : "Testing status updated successfully.",
-      issue,
+      message: "Testing status updated successfully.",
+      data: issue,
     });
   } catch (error) {
     console.error("Error updating testing status:", error);

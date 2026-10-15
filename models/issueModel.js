@@ -36,7 +36,10 @@ const issueSchema = new mongoose.Schema(
       ],
       default: [],
     },
-
+    previouslyRejected: {
+      type: Boolean,
+      default: false,
+    },
     completionDate: {
       type: Date,
       //required:true
