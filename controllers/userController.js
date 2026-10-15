@@ -413,7 +413,7 @@ router.post("/allSelected", async (req, res) => {
 
     const users = await userModel.find(
       { _id: { $in: userIds } },
-      "_id Name ProfileImage",
+      "_id Name ProfileImage Role subRole",
     ); // Use $in to filter by provided IDs
 
     res.status(200).json({
