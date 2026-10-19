@@ -23,7 +23,11 @@ const notificationSchema = new mongoose.Schema({
   message: {
     type: String,
   },
-
+  notificationType: {
+    type: String,
+    enum: ["mention", "issue_assigned"],
+    default: "mention",
+  },
   timestamp: {
     type: Date,
     default: Date.now,

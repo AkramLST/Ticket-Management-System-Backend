@@ -17,9 +17,16 @@ const transporter = nodemailer.createTransport({
 
 router.post("/create", async (req, res) => {
   try {
-    const { senderId, receiverId, commentId, comment, issueId, message } =
-      req.body;
-
+    const {
+      senderId,
+      receiverId,
+      commentId,
+      comment,
+      issueId,
+      message,
+      notificationType = "mention",
+      projectId,
+    } = req.body;
     if (!receiverId) {
       return res.status(400).json({
         success: false,
@@ -41,6 +48,7 @@ router.post("/create", async (req, res) => {
       });
     }
 
+    // Create the notification in the database.
     const notification = new notificationModel({
       senderId,
       receiverId,
@@ -48,38 +56,53 @@ router.post("/create", async (req, res) => {
       comment,
       IssueId: issueId,
       message,
+      notificationType,
       read: false,
     });
 
     const savedNotification = await notification.save();
 
-    const mentionedUser = await userModel.findById(receiverId);
+    // Get the notification receiver.
+    const receiver = await userModel.findById(receiverId);
 
-    if (mentionedUser?.Email) {
-      const mentionedURL = `https://lst-ticketing-system.netlify.app/issue/${issueId}`;
+    if (receiver?.Email) {
+      const issueURL = projectId
+        ? `https://lst-ticketing-system.netlify.app/issues/${projectId}/issue/${issueId}`
+        : `https://lst-ticketing-system.netlify.app/issue/${issueId}`;
 
-      let commentInfo = null;
+      const isAssignment = notificationType === "issue_assigned";
 
-      if (commentId && mongoose.Types.ObjectId.isValid(commentId)) {
-        commentInfo = await commentModel.findById(commentId);
+      let emailMessage = message;
+
+      // For mentions, preserve the existing comment-based behavior.
+      if (!isAssignment) {
+        let commentInfo = null;
+
+        if (commentId && mongoose.Types.ObjectId.isValid(commentId)) {
+          commentInfo = await commentModel.findById(commentId);
+        }
+
+        emailMessage = commentInfo?.comment || comment || message;
       }
-
-      const emailComment = commentInfo?.comment || comment || message;
 
       const mailOptions = {
         from: process.env.EMAIL_USER,
-        to: mentionedUser.Email,
-        subject: "You have been mentioned in a comment",
-        html: `
-          <p>${emailComment}</p>
+        to: receiver.Email,
 
-          <p>
-            Click
-            <a href="${mentionedURL}">
-              here
-            </a>
-            to view the issue.
-          </p>
+        subject: isAssignment
+          ? "You have been assigned an issue"
+          : "You have been mentioned in a comment",
+
+        html: `
+          <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+            <p>${emailMessage}</p>
+
+            <p>
+              Click
+              <a href="${issueURL}">here</a>
+              to view the issue.
+            </p>
+          </div>
         `,
       };
 
