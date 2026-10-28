@@ -4,16 +4,9 @@ import notificationModel from "../models/notificationModel.js";
 import userModel from "../models/userModel.js";
 import nodemailer from "nodemailer";
 import commentModel from "../models/commentModel.js";
+import transporter from "../helper/mailer.js";
 
 const router = express.Router();
-
-const transporter = nodemailer.createTransport({
-  service: "Gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
 
 router.post("/create", async (req, res) => {
   try {
@@ -86,7 +79,7 @@ router.post("/create", async (req, res) => {
       }
 
       const mailOptions = {
-        from: process.env.EMAIL_USER,
+        from: process.env.MAIL_USER,
         to: receiver.Email,
 
         subject: isAssignment
