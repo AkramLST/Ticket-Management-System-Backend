@@ -43,7 +43,7 @@ router.post("/register", async (req, res) => {
     console.log("body", req.body);
 
     // Required fields
-    if (!username || !email || !password || !gender || !role || !id) {
+    if (!username || !email || !password || !role || !id) {
       return res.status(400).json({
         success: false,
         message: "All required fields must be provided",
